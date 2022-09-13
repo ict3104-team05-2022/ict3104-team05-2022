@@ -8,4 +8,4 @@ Ensure that you have the following installed:
 
 ## Binder
 You can access the binder here
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ict3104-team05-2022/ict3104-team05-2022/main?labpath=ICT3104%20Jupyter%20Notebook.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ict3104-team05-2022/ict3104-team05-2022/dev?labpath=ICT3104%20Jupyter%20Notebook.ipynb)
