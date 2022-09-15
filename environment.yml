@@ -3,6 +3,8 @@ channels:
   - conda-forge
 dependencies:
   - python=3.8
+  - pip=20.2.4
+  - ipykernel = 6.15.3
   - pip:
     - joblib==1.1.0
     - numpy==1.23.3
@@ -14,3 +16,4 @@ dependencies:
     - torch==1.10.1
     - torchaudio==0.10.1
     - torchvision==0.11.2
+    - tqdm==4.64.1
