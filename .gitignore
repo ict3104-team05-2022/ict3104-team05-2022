@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+pipeline/data/RGB/
+
+.idea/
+
+pipeline/video/
