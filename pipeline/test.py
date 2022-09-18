@@ -397,7 +397,7 @@ if __name__ == '__main__':
     print(str(args.model))
     print('batch_size:', batch_size)
     print('cuda_avail', torch.cuda.is_available())
-    fileName = input("Type file name: ")
+    # fileName = input("Type file name: ")
 
     if args.mode == 'flow':
         print('flow mode', flow_root) #ownself commented
