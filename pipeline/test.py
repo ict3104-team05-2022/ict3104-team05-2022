@@ -158,7 +158,7 @@ def val_file(models, num_epochs=50):
             indexOfMaxValue = activityAtEachFrameArray.index(maxValue)
             arrayForMaxAndIndex.append([activityList[indexOfMaxValue], maxValue])
         create_caption_video(arrayForMaxAndIndex)
-        # print("array for both max and index: ", arrayForMaxAndIndex)
+        print("array for both max and index: ", arrayForMaxAndIndex)
 
 
 def load_data(train_split, val_split, root):
@@ -202,24 +202,10 @@ def run(models, criterion, num_epochs=50):
             sched.step(val_loss)
 
             # print("prob_val is: ", prob_val)
-            # print("number of array is: ", len(prob_val.get('P02T01C07')))
+            print("number of array is: ", len(prob_val.get('P02T01C07')))
             np.set_printoptions(threshold=sys.maxsize)
             # print("content in first array: ", prob_val.get('P02T01C07')[0])
             print("number of item in first array: ", len(prob_val.get('P18T15C03')[0]))
-
-            arrayForMaxAndIndex = []
-            for index in range(len(prob_val.get('P18T15C03')[1])):
-                # get the highest prob class at each frame from 51 class
-                activityAtEachFrameArray = []
-                for index1 in range(len(prob_val.get('P18T15C03'))):
-                    activityAtEachFrameArray.append(prob_val.get('P18T15C03')[index1][index])
-                maxValue = max(activityAtEachFrameArray)
-                indexOfMaxValue = activityAtEachFrameArray.index(maxValue)
-                # if maxValue > 0.5:
-                if maxValue > 0 and (indexOfMaxValue == 36 or indexOfMaxValue == 37 or indexOfMaxValue == 38):
-                    arrayForMaxAndIndex.append(
-                        [index, indexOfMaxValue, maxValue, round((((index + 1) * 0.64) / 60), 2)])
-            print("array for both max and index: ", arrayForMaxAndIndex)
 
             if best_map < val_map:
                 best_map = val_map
@@ -403,7 +389,7 @@ if __name__ == '__main__':
     print(str(args.model))
     print('batch_size:', batch_size)
     print('cuda_avail', torch.cuda.is_available())
-    # fileName = input("Type file name: ")
+    fileName = input("Type file name: ")
 
     if args.mode == 'flow':
         print('flow mode', flow_root) #ownself commented

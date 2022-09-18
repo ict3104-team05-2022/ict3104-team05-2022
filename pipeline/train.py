@@ -5,7 +5,7 @@ import argparse
 import sys
 import torch
 
-
+# Convert input variable to true or false
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
@@ -14,7 +14,7 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
-
+# Add parameter arguments to the parser
 parser = argparse.ArgumentParser()
 parser.add_argument('-mode', type=str, help='rgb or flow (or joint for eval)')
 parser.add_argument('-train', type=str2bool, default='True', help='train or eval')
@@ -39,6 +39,7 @@ parser.add_argument('-feat', type=str, default='False')
 parser.add_argument('-split_setting', type=str, default='CS')
 args = parser.parse_args()
 
+#Import neccessary libraries
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -80,6 +81,7 @@ if str(args.APtype) == 'map':
 
 batch_size = int(args.batch_size)
 
+# If it is TSU dataset, load the data to train_spilt and test_split
 if args.dataset == 'TSU':
     split_setting=str(args.split_setting)
     
@@ -88,27 +90,29 @@ if args.dataset == 'TSU':
     classes=51
     
     if split_setting =='CS':
-        train_split = './data/smarthome_CS_51.json'
-        test_split = './data/smarthome_CS_51.json'
+        train_split = './pipeline/data/smarthome_CS_51.json'
+        test_split = './pipeline/data/smarthome_CS_51.json'
         
     elif split_setting =='CV':
-        train_split = './data/smarthome_CV_51.json'
-        test_split = './data/smarthome_CV_51.json'
+        train_split = './pipeline/data/smarthome_CV_51.json'
+        test_split = './pipeline/data/smarthome_CV_51.json'
     
-    rgb_root = '/data/stars/user/rdai/smarthome_untrimmed/features/i3d_16frames_64000_SSD'
-    skeleton_root='/skeleton/feat/Path/' # 
+    #Unknown ?
+    rgb_root = './pipeline/data/RGB'
+    skeleton_root='./pipeline/data/Skeleton' 
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
-
+# Load RGB skeleton data
 def load_data_rgb_skeleton(train_split, val_split, root_skeleton, root_rgb):
-    # Load Data
-   
+
+    # Load training data to Pytorch dataloader
     if len(train_split) > 0:
         dataset = Dataset(train_split, 'training', root_skeleton, root_rgb, batch_size, classes)
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0,
                                                  pin_memory=True, collate_fn=collate_fn) # 8
+    # Load validation data to Pytorch dataloader
     else:
         dataset = None
         dataloader = None
@@ -167,6 +171,7 @@ def run(models, criterion, num_epochs=50):
                 torch.save(model,'./'+str(args.model)+'/model_epoch_'+str(args.lr)+'_'+str(epoch))
                 print('save here:','./'+str(args.model)+'/weight_epoch_'+str(args.lr)+'_'+str(epoch))
 
+# Eval the model
 def eval_model(model, dataloader, baseline=False):
     results = {}
     for data in dataloader:
@@ -177,7 +182,7 @@ def eval_model(model, dataloader, baseline=False):
         results[other[0][0]] = (outputs.data.cpu().numpy()[0], probs.data.cpu().numpy()[0], data[2].numpy()[0], fps)
     return results
 
-
+# Run the model through the network
 def run_network(model, data, gpu, epoch=0, baseline=False):
     inputs, mask, labels, other = data
     # wrap them in Variable
@@ -213,7 +218,7 @@ def run_network(model, data, gpu, epoch=0, baseline=False):
 
     return outputs_final, loss, probs_f, corr / tot
 
-
+# Train the model
 def train_step(model, gpu, optimizer, dataloader, epoch):
     model.train(True)
     tot_loss = 0.0
@@ -241,7 +246,7 @@ def train_step(model, gpu, optimizer, dataloader, epoch):
 
     return train_map, epoch_loss
 
-
+# validate the model
 def val_step(model, gpu, dataloader, epoch):
     model.train(False)
     apm = APMeter()
@@ -315,7 +320,7 @@ if __name__ == '__main__':
 
         if args.load_model!= "False":
             # entire model
-            model = torch.load(args.load_model)
+            model = torch.load(args.load_model, map_location=torch.device('cpu'))
             # weight
             # model.load_state_dict(torch.load(str(args.load_model)))
             print("loaded",args.load_model)

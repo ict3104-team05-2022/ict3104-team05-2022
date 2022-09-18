@@ -131,3 +131,5 @@ dmypy.json
 pipeline/data/RGB/
 
 .idea/
+
+.pipeline/video/
