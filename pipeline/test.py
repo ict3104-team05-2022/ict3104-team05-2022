@@ -157,8 +157,10 @@ def val_file(models, num_epochs=50):
             maxValue = max(activityAtEachFrameArray)
             indexOfMaxValue = activityAtEachFrameArray.index(maxValue)
             arrayForMaxAndIndex.append([activityList[indexOfMaxValue], maxValue])
-        create_caption_video(arrayForMaxAndIndex)
         print("array for both max and index: ", arrayForMaxAndIndex)
+        create_caption_video(arrayForMaxAndIndex)
+
+
 
 
 def load_data(train_split, val_split, root):
@@ -328,7 +330,7 @@ def val_step(model, gpu, dataloader, epoch):
 
 def create_caption_video(arrayWithCaptions):
     import cv2
-    cap = cv2.VideoCapture('./pipline/video/' + fileName + ".mp4")
+    cap = cv2.VideoCapture('../data/Untrim/RGB Video/' + fileName + ".mp4")
     print("No: ", cap.get(cv2.CAP_PROP_FRAME_COUNT))
     length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     numberOfFramePerCaption = math.ceil(length / len(arrayWithCaptions))
@@ -338,13 +340,13 @@ def create_caption_video(arrayWithCaptions):
     width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
     # we are using x264 codec for mp4
     fourcc = cv2.VideoWriter_fourcc(*'X264')
-    writer = cv2.VideoWriter('./pipeline/video/output/OUTPUT_VIDEO.mp4', apiPreference=0, fourcc=fourcc,
+    print(os.getcwd())
+    writer = cv2.VideoWriter('./video/output/OUTPUT_VIDEO.mp4', apiPreference=0, fourcc=fourcc,
                              fps=video_fps[0], frameSize=(int(width), int(height)))
 
     i = 1  # frame counter
     counter = 0  # counter for arrayWithCaptions
-    while (True):
-
+    while True:
         # Capture frames in the video
         ret, frame = cap.read()
         # describe the type of font
@@ -373,7 +375,13 @@ def create_caption_video(arrayWithCaptions):
 
         # creating 'q' as the quit
         # button for the video
+
         if cv2.waitKey(1) & 0xFF == ord('q'):
+            cv2.destroyAllWindows()
+            break
+        if cv2.getWindowProperty('video', cv2.WND_PROP_VISIBLE) < 1:
+            print("ALL WINDOWS ARE CLOSED")
+            cv2.destroyAllWindows()
             break
         if not ret:
             break
