@@ -15,8 +15,8 @@ for id in data:
     # data_subset = data[id]['subset']
     # print(data_subset)
 
-# lists all files in the RGB directory and saving it into all_videos list    
-all_videos = []    
+# lists all files in the RGB directory and saving it into all_videos list
+all_videos = []
 path = '../pipeline/data/RGB/Videos_mp4'
 files = os.listdir(path)
 
