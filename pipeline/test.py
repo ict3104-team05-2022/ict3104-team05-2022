@@ -39,6 +39,9 @@ parser.add_argument('-batch_size', type=str, default='2')  # change default from
 parser.add_argument('-kernelsize', type=str, default='3') # change default from "False" to "3"
 parser.add_argument('-feat', type=str, default='False')
 parser.add_argument('-split_setting', type=str, default='CS')
+parser.add_argument('-input_video_file', type=str, default='P02T04C05',  help='input video file name')
+parser.add_argument('-input_video_full_path', type=str, default='../data/P02T04C05.mp4', help='input video file path')
+parser.add_argument('-test', type=str2bool, default='False', help='train or eval')
 args = parser.parse_args()
 
 import torch
@@ -47,6 +50,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 import random
+import cv2
 
 # set random seed
 if args.randomseed == "False":
@@ -158,7 +162,9 @@ def val_file(models, num_epochs=50):
             indexOfMaxValue = activityAtEachFrameArray.index(maxValue)
             arrayForMaxAndIndex.append([activityList[indexOfMaxValue], maxValue])
         create_caption_video(arrayForMaxAndIndex)
-        print("array for both max and index: ", arrayForMaxAndIndex)
+        #print("array for both max and index: ", arrayForMaxAndIndex)
+
+
 
 
 def load_data(train_split, val_split, root):
@@ -327,8 +333,8 @@ def val_step(model, gpu, dataloader, epoch):
 
 
 def create_caption_video(arrayWithCaptions):
-    import cv2
-    cap = cv2.VideoCapture('./pipline/video/' + fileName + ".mp4")
+    # video = args.load_video
+    cap = cv2.VideoCapture("C:\\Users\\Eddie\\Documents\\ict3104-team05-2022\\data\\" + fileName + ".mp4")
     print("No: ", cap.get(cv2.CAP_PROP_FRAME_COUNT))
     length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     numberOfFramePerCaption = math.ceil(length / len(arrayWithCaptions))
@@ -338,13 +344,13 @@ def create_caption_video(arrayWithCaptions):
     width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
     # we are using x264 codec for mp4
     fourcc = cv2.VideoWriter_fourcc(*'X264')
-    writer = cv2.VideoWriter('./pipeline/video/output/OUTPUT_VIDEO.mp4', apiPreference=0, fourcc=fourcc,
+    print(os.getcwd())
+    writer = cv2.VideoWriter('./video/output/OUTPUT_VIDEO.mp4', apiPreference=0, fourcc=fourcc,
                              fps=video_fps[0], frameSize=(int(width), int(height)))
 
     i = 1  # frame counter
     counter = 0  # counter for arrayWithCaptions
-    while (True):
-
+    while True:
         # Capture frames in the video
         ret, frame = cap.read()
         # describe the type of font
@@ -373,7 +379,13 @@ def create_caption_video(arrayWithCaptions):
 
         # creating 'q' as the quit
         # button for the video
+
         if cv2.waitKey(1) & 0xFF == ord('q'):
+            cv2.destroyAllWindows()
+            break
+        if cv2.getWindowProperty('video', cv2.WND_PROP_VISIBLE) < 1:
+            print("ALL WINDOWS ARE CLOSED")
+            cv2.destroyAllWindows()
             break
         if not ret:
             break
@@ -389,7 +401,10 @@ if __name__ == '__main__':
     print(str(args.model))
     print('batch_size:', batch_size)
     print('cuda_avail', torch.cuda.is_available())
-    fileName = input("Type file name: ")
+    # fileName = input("Type file name: ")
+    fileName = args.input_video_file
+    # Remove .mp4 from fileName
+    fileName = fileName[:-4]
 
     if args.mode == 'flow':
         print('flow mode', flow_root) #ownself commented
@@ -436,5 +451,9 @@ if __name__ == '__main__':
         print(lr)
         optimizer = optim.Adam(model.parameters(), lr=lr)
         lr_sched = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=8, verbose=True)
-        run([(model, 0, dataloaders, optimizer, lr_sched, args.comp_info)], criterion, num_epochs=int(args.epoch))
-        # val_file([(model, 0, dataloaders, optimizer, lr_sched, args.comp_info)], num_epochs=int(args.epoch))
+        # run([(model, 0, dataloaders, optimizer, lr_sched, args.comp_info)], criterion, num_epochs=int(args.epoch))
+        print(args.test)
+        if args.test:
+            run([(model, 0, dataloaders, optimizer, lr_sched, args.comp_info)], criterion, num_epochs=int(args.epoch))
+        else:
+            val_file([(model, 0, dataloaders, optimizer, lr_sched, args.comp_info)], num_epochs=int(args.epoch))
