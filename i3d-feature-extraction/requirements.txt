@@ -1,0 +1,11 @@
+omegaconf==2.0.6
+opencv-python==4.6.0.66
+# torch==1.12.1
+torchvision==0.13.1
+scipy==1.9.1
+tqdm==4.64.1
+av==9.2.0
+
+# clip
+ftfy==6.1.1
+regex==2022.9.13
