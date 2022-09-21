@@ -1,8 +1,6 @@
 name: ict3104
 channels:
   - conda-forge
-  - default
-  - pytorch
 dependencies:
   - python=3.8
   - pip=20.2.4
