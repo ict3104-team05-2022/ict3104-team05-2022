@@ -28,6 +28,8 @@ Ensure that you have the following installed:
 ```
  jupyter notebook
 ```
+## Installation V2
+Run the setup.ipynb notebook to install the dependencies.
 
 ## Binder
 You can access the binder here
