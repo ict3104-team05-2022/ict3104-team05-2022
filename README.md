@@ -22,12 +22,14 @@ Ensure that you have the following installed:
 - Install the following packages:
 ```
  pip install -r requirements.txt
- pip install torch==1.10.1+cu113 torchvision==0.11.2+cu113 torchaudio==0.10.1 -f https://download.pytorch.org/whl/torch_stable.html
+ pip install torch==1.10.1+cu111 torchvision==0.11.2+cu113 torchaudio==0.10.1 -f https://download.pytorch.org/whl/torch_stable.html
 ```
 - Run the following command to start the juypter notebook:
 ```
  jupyter notebook
 ```
+## Installation V2
+Run the setup.ipynb notebook to install the dependencies.
 
 ## Binder
 You can access the binder here
