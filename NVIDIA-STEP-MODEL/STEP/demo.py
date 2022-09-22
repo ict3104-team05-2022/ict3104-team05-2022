@@ -34,6 +34,7 @@ def main():
     ################## Customize your configuratons here ###################
 
     checkpoint_path = 'pretrained/ava_step.pth'
+    os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
     if os.path.isfile(checkpoint_path):
         print ("Loading pretrain model from %s" % checkpoint_path)
         map_location = 'cuda:0'
@@ -43,7 +44,8 @@ def main():
         raise ValueError("Pretrain model not found!", checkpoint_path)
 
     # TODO: Set data_root to the customized input dataset
-    args.data_root = '/datasets/demo/frames/'
+    args.num_workers = 1
+    args.data_root = 'datasets/demo/frames/'
     args.save_root = os.path.join(os.path.dirname(args.data_root), 'results/')
     if not os.path.isdir(args.save_root):
         os.makedirs(args.save_root)
