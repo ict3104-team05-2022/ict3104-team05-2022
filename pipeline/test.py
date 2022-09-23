@@ -165,8 +165,6 @@ def val_file(models, num_epochs=50):
         #print("array for both max and index: ", arrayForMaxAndIndex)
 
 
-
-
 def load_data(train_split, val_split, root):
     # Load Data
 
@@ -334,7 +332,7 @@ def val_step(model, gpu, dataloader, epoch):
 
 def create_caption_video(arrayWithCaptions):
     # video = args.load_video
-    cap = cv2.VideoCapture("C:\\Users\\Eddie\\Documents\\ict3104-team05-2022\\data\\" + fileName + ".mp4")
+    cap = cv2.VideoCapture("ict3104-team05-2022\\data\\" + fileName + ".mp4")
     print("No: ", cap.get(cv2.CAP_PROP_FRAME_COUNT))
     length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     numberOfFramePerCaption = math.ceil(length / len(arrayWithCaptions))
