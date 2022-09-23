@@ -333,8 +333,8 @@ def val_step(model, gpu, dataloader, epoch):
 
 
 def create_caption_video(arrayWithCaptions):
-    # video = args.load_video
-    cap = cv2.VideoCapture("C:\\Users\\Eddie\\Documents\\ict3104-team05-2022\\data\\" + fileName + ".mp4")
+    video = args.input_video_full_path
+    cap = cv2.VideoCapture(video)
     print("No: ", cap.get(cv2.CAP_PROP_FRAME_COUNT))
     length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     numberOfFramePerCaption = math.ceil(length / len(arrayWithCaptions))
