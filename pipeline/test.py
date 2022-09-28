@@ -372,8 +372,12 @@ def create_caption_video(arrayWithCaptions):
                     cv2.LINE_4)
 
         i += 1
+
         # Display the resulting frame
-        cv2.imshow('video', frame)
+        # TODO: Get it to run in within the cell as it runs
+
+        # Uncomment to display the external video player frame
+        # cv2.imshow('video', frame)
 
         writer.write(frame)
 
