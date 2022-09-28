@@ -133,3 +133,4 @@ pipeline/data/RGB/
 .idea/
 
 NVIDIA-STEP-MODEL/STEP/pretrained/ava_step.pth
+*.mp4
