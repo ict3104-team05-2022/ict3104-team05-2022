@@ -24,12 +24,14 @@ for f in files:
     all_videos.append(f[:-4])
 
 # displays length of each video list
-print(f"valid vids: {len(valid_videos)}")
-print(f"all vids: {len(all_videos)}")
+print(f"Number of valid videos from smarthome_cs_51.json: {len(valid_videos)}")
+print(f"Number of videos from TSU project RGB data folder: {len(all_videos)}")
 
 # displays length of matching video list
 matching_ids = set(valid_videos) & set(all_videos)
-print(f"matching vids: {len(matching_ids)}")
+print(f"Number of valid videos from the TSU project RGB data folder: {len(matching_ids)}")
+print(f"\nvalidate_train_test.py ran with a total of {len(matching_ids)} valid videos to extract features from.")
+print("valid_videos.txt containing file paths of valid videos saved to ./i3d-feature-extraction/sample")
 
 # writes the matching video file paths into a txt file
 with open('./sample/valid_videos.txt', 'w') as f:
