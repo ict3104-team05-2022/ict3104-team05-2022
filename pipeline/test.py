@@ -3,7 +3,6 @@ import time
 import os
 import argparse
 import sys
-import torch
 
 
 def str2bool(v):
@@ -28,7 +27,7 @@ parser.add_argument('-flow_root', type=str, default='no_root')
 parser.add_argument('-type', type=str, default='original')
 parser.add_argument('-lr', type=str, default='0.1')
 parser.add_argument('-epoch', type=str, default='5')  # change default from "50" to "5"
-parser.add_argument('-model', type=str, default='PDAN_TSU_RGB')  # change default from "" to "PDAN_TSU_RGB"
+parser.add_argument('-model', type=str, default='PDAN')  # change default from "" to "PDAN_TSU_RGB"
 parser.add_argument('-APtype', type=str, default='map')  # change default from "wap" to "map"
 parser.add_argument('-randomseed', type=str, default='False')
 parser.add_argument('-load_model', type=str,
@@ -251,7 +250,7 @@ def run_network(model, data, gpu, epoch=0, baseline=False):
 
     outputs_final = activation
 
-    if args.model == "PDAN_TSU_RGB":
+    if args.model == "PDAN":
         # print('outputs_final1', outputs_final.size())
         outputs_final = outputs_final[:, 0, :, :]
     # print('outputs_final',outputs_final.size())
@@ -402,6 +401,8 @@ def create_caption_video(arrayWithCaptions):
 
 
 if __name__ == '__main__':
+    import torch
+    __spec__ = None
     print(str(args.model))
     print('batch_size:', batch_size)
     print('cuda_avail', torch.cuda.is_available())
@@ -430,7 +431,7 @@ if __name__ == '__main__':
         num_classes = classes
         mid_channel = int(args.num_channel)
 
-        if args.model == "PDAN_TSU_RGB":
+        if args.model == "PDAN":
             print("you are processing PDAN_TSU_RGB")
             from models import PDAN as Net
 

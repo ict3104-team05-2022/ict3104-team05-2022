@@ -90,16 +90,16 @@ if args.dataset == 'TSU':
     classes=51
     
     if split_setting =='CS':
-        train_split = './pipeline/data/smarthome_CS_51.json'
-        test_split = './pipeline/data/smarthome_CS_51.json'
+        train_split = './data/smarthome_CS_51.json'
+        test_split = './data/smarthome_CS_51.json'
         
     elif split_setting =='CV':
-        train_split = './pipeline/data/smarthome_CV_51.json'
-        test_split = './pipeline/data/smarthome_CV_51.json'
+        train_split = './data/smarthome_CV_51.json'
+        test_split = './data/smarthome_CV_51.json'
     
     #Unknown ?
-    rgb_root = './pipeline/data/RGB'
-    skeleton_root='./pipeline/data/Skeleton' 
+    rgb_root = './data/RGB'
+    skeleton_root='./data/Skeleton'
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
@@ -128,19 +128,19 @@ def load_data_rgb_skeleton(train_split, val_split, root_skeleton, root_rgb):
 
 def load_data(train_split, val_split, root):
     # Load Data
-  
+    # Change from 8 to 2
     if len(train_split) > 0:
         dataset = Dataset(train_split, 'training', root, batch_size, classes)
-        dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=8,
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=1,
                                                  pin_memory=True, collate_fn=collate_fn)
         dataloader.root = root
     else:
 
         dataset = None
         dataloader = None
-
+    # Change from 2 to 1
     val_dataset = Dataset(val_split, 'testing', root, batch_size, classes)
-    val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=1, shuffle=True, num_workers=2,
+    val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=1, shuffle=True, num_workers=1,
                                                  pin_memory=True, collate_fn=collate_fn)
     val_dataloader.root = root
 
