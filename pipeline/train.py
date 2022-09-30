@@ -202,7 +202,7 @@ def run_network(model, data, gpu, epoch=0, baseline=False):
     
     outputs_final = activation
 
-    if args.model=="PDAN":
+    if args.model=="PDAN_TSU_RGB":
         # print('outputs_final1', outputs_final.size())
         outputs_final = outputs_final[:,0,:,:]
     # print('outputs_final',outputs_final.size())
@@ -310,8 +310,8 @@ if __name__ == '__main__':
         mid_channel=int(args.num_channel)
 
 
-        if args.model=="PDAN":
-            print("you are processing PDAN")
+        if args.model=="PDAN_TSU_RGB":
+            print("you are processing PDAN_TSU_RGB")
             from models import PDAN as Net
             model = Net(num_stages=1, num_layers=5, num_f_maps=mid_channel, dim=input_channnel, num_classes=classes)
 
