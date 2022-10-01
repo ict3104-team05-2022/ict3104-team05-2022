@@ -345,26 +345,34 @@ def create_caption_video(arrayWithCaptions):
     fourcc = cv2.VideoWriter_fourcc(*'X264')
     print(os.getcwd())
     writer = cv2.VideoWriter('./video/output/OUTPUT_VIDEO.mp4', apiPreference=0, fourcc=fourcc,
-                             fps=video_fps[0], frameSize=(int(width), int(height)))
+                             fps=video_fps[0], frameSize=(int(width), int(height + 200)))
+
+    # print('video height: ' + str(height)) # 480.0
+    # print('video width: ' + str(width)) # 640.0
+
+    # Add rectangle below original video frame
+    height_with_background = int(height + 50)
 
     i = 1  # frame counter
     counter = 0  # counter for arrayWithCaptions
     while True:
         # Capture frames in the video
         ret, frame = cap.read()
-        # describe the type of font
-        # to be used.
+
+        # Add white background for video inference captions
+        image = cv2.copyMakeBorder(frame, 0, 200, 0, 0, cv2.BORDER_CONSTANT, None, value = (255,255,255))
+
+        # describe the type of font to be used.
         font = cv2.FONT_HERSHEY_SIMPLEX
 
-        # Use putText() method for
-        # inserting text on video
+        # Use putText() method for inserting text on video
         caption = arrayWithCaptions[counter][0]
         if i % numberOfFramePerCaption == 0:
             counter += 1
             caption = arrayWithCaptions[counter][0]
-        cv2.putText(frame,
+        cv2.putText(image,
                     caption,
-                    (50, 50),
+                    (50, height_with_background),
                     font, 1,
                     (0, 0, 0),
                     2,
@@ -376,9 +384,9 @@ def create_caption_video(arrayWithCaptions):
         # TODO: Get it to run in within the cell as it runs
 
         # Uncomment to display the external video player frame
-        cv2.imshow('video', frame)
+        cv2.imshow('video', image)
 
-        writer.write(frame)
+        writer.write(image)
 
         # creating 'q' as the quit
         # button for the video
