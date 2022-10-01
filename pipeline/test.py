@@ -3,7 +3,6 @@ import time
 import os
 import argparse
 import sys
-import torch
 
 
 def str2bool(v):
@@ -377,7 +376,7 @@ def create_caption_video(arrayWithCaptions):
         # TODO: Get it to run in within the cell as it runs
 
         # Uncomment to display the external video player frame
-        # cv2.imshow('video', frame)
+        cv2.imshow('video', frame)
 
         writer.write(frame)
 
@@ -402,6 +401,8 @@ def create_caption_video(arrayWithCaptions):
 
 
 if __name__ == '__main__':
+    import torch
+    __spec__ = None
     print(str(args.model))
     print('batch_size:', batch_size)
     print('cuda_avail', torch.cuda.is_available())
@@ -409,7 +410,6 @@ if __name__ == '__main__':
     fileName = args.input_video_file
     # Remove .mp4 from fileName
     fileName = fileName[:-4]
-
     if args.mode == 'flow':
         print('flow mode', flow_root) #ownself commented
         dataloaders, datasets = load_data(train_split, test_split, flow_root) #ownself commented
