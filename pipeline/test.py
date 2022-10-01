@@ -376,20 +376,20 @@ def create_caption_video(arrayWithCaptions):
         # TODO: Get it to run in within the cell as it runs
 
         # Uncomment to display the external video player frame
-        cv2.imshow('video', frame)
+        # cv2.imshow('video', frame)
 
         writer.write(frame)
 
         # creating 'q' as the quit
         # button for the video
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            cv2.destroyAllWindows()
-            break
-        if cv2.getWindowProperty('video', cv2.WND_PROP_VISIBLE) < 1:
-            print("ALL WINDOWS ARE CLOSED")
-            cv2.destroyAllWindows()
-            break
+        # if cv2.waitKey(1) & 0xFF == ord('q'):
+        #     cv2.destroyAllWindows()
+        #     break
+        # if cv2.getWindowProperty('video', cv2.WND_PROP_VISIBLE) < 1:
+        #     print("ALL WINDOWS ARE CLOSED")
+        #     cv2.destroyAllWindows()
+        #     break
         if not ret:
             break
 
