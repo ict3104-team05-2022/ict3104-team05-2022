@@ -3,7 +3,8 @@ import time
 import os
 import argparse
 import sys
-
+import warnings
+warnings.filterwarnings("ignore")
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -128,21 +129,33 @@ def load_data_rgb_skeleton(train_split, val_split, root_skeleton, root_rgb):
     return dataloaders, datasets
 
 
-activityList = ["Enter", "Walk", "Make_coffee.Get_water", "Make_tea/put something in sink", "unknown class 4",
-                "Use_Drawer", "unknown class 6", "Use_telephone",
-                "Leave", "Put_something_on_table", "Drink.From_glass", "unknown class 11", "unknown class 12",
-                "Drink.From_cup", "Dump_in_trash", "unknown class 15",
-                "unknown class 16", "Use_cupboard", "unknown class 18", "Read", "Drink.From_bottle", "Use_fridge",
-                "Wipe_table/clean dish with water", "unknown class 23",
-                "Eat_snack", "Sit_down", "Watch_TV", "Use_laptop", "Get_up", "Drink.From_bottle", "unknown class 30",
-                "unknown class 31",
-                "Lay_down", "unknown class 33", "Write", "Breakfast.Eat_at_table", "unknown class 36",
-                "unknown class 37", "unknown class 38", "Breakfast.Cut_bread",
-                "Clean_dishes.Dry_up", "unknown class 41", "Cook.Use_stove", "Cook.Cut", "unknown class 44",
-                "Cook.Stir", "Cook.Use_oven", "like uselaptop",
-                "unknown class 48", "unknown class 49", "unknown class 50"]
+# activityList = ["Enter", "Walk", "Make_coffee.Get_water", "Make_tea/put something in sink", "unknown class 4",
+#                 "Use_Drawer", "unknown class 6", "Use_telephone",
+#                 "Leave", "Put_something_on_table", "Drink.From_glass", "unknown class 11", "unknown class 12",
+#                 "Drink.From_cup", "Dump_in_trash", "unknown class 15",
+#                 "unknown class 16", "Use_cupboard", "unknown class 18", "Read", "Drink.From_bottle", "Use_fridge",
+#                 "Wipe_table/clean dish with water", "unknown class 23",
+#                 "Eat_snack", "Sit_down", "Watch_TV", "Use_laptop", "Get_up", "Drink.From_bottle", "unknown class 30",
+#                 "unknown class 31",
+#                 "Lay_down", "unknown class 33", "Write", "Breakfast.Eat_at_table", "unknown class 36",
+#                 "unknown class 37", "unknown class 38", "Breakfast.Cut_bread",
+#                 "Clean_dishes.Dry_up", "unknown class 41", "Cook.Use_stove", "Cook.Cut", "unknown class 44",
+#                 "Cook.Stir", "Cook.Use_oven", "like uselaptop",
+#                 "unknown class 48", "unknown class 49", "unknown class 50"]
 
-
+activityList = ["Enter", "Walk", "Make_coffee", "Get_water", "Make_Coffee",
+            "Use_Drawer", "Make_coffee.Pour_grains", "Use_telephone",
+            "Leave", "Put_something_on_table", "Take_something_off_table", "Pour.From_kettle", "Stir_coffee/tea",
+            "Drink.From_cup", "Dump_in_trash", "Make_tea",
+            "Make_tea.Boil_water", "Use_cupboard", "Make_tea.Insert_tea_bag", "Read", "Take_pills", "Use_fridge",
+            "Clean_dishes", "Clean_dishes.Put_something_in_sink",
+            "Eat_snack", "Sit_down", "Watch_TV", "Use_laptop", "Get_up", "Drink.From_bottle", "Pour.From_bottle",
+            "Drink.From_glass",
+            "Lay_down", "Drink.From_can", "Write", "Breakfast", "Breakfast.Spread_jam_or_butter",
+            "Breakfast.Cut_bread", "Breakfast.Eat_at_table", "Breakfast.Take_ham",
+            "Clean_dishes.Dry_up", "Wipe_table", "Cook", "Cook.Cut", "Cook.Use_stove",
+            "Cook.Stir", "Cook.Use_oven", "Clean_dishes.Clean_with_water",
+            "Use_tablet", "Use_glasses", "Pour.From_can"]
 # self declared (essentially works same as run() method)
 def val_file(models, num_epochs=50):
     probs = []
@@ -150,18 +163,21 @@ def val_file(models, num_epochs=50):
         prob_val, val_loss, val_map = val_step(model, gpu, dataloader['val'], 0)
         probs.append(prob_val)
         sched.step(val_loss)
-
         arrayForMaxAndIndex = []
         for index in range(len(prob_val.get(fileName)[1])):
-            # get the highest prob class at each frame from 51 class
+            # get the highest prob class at each frame from 51 activity.
             activityAtEachFrameArray = []
             for index1 in range(len(prob_val.get(fileName))):
                 activityAtEachFrameArray.append(prob_val.get(fileName)[index1][index])
+            # print("Activity at each frame: ", activityAtEachFrameArray)
             maxValue = max(activityAtEachFrameArray)
+            # print("Max Value: ", maxValue)
             indexOfMaxValue = activityAtEachFrameArray.index(maxValue)
+            # print("Index of Max Value: ", indexOfMaxValue)
             arrayForMaxAndIndex.append([activityList[indexOfMaxValue], maxValue])
+            print("Array for max and index: ", arrayForMaxAndIndex)
         create_caption_video(arrayForMaxAndIndex)
-        #print("array for both max and index: ", arrayForMaxAndIndex)
+        print("Final array for both max and index: ", arrayForMaxAndIndex)
 
 
 
@@ -341,9 +357,8 @@ def create_caption_video(arrayWithCaptions):
     video_fps = cap.get(cv2.CAP_PROP_FPS),
     height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
     width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-    # we are using x264 codec for mp4
-    fourcc = cv2.VideoWriter_fourcc(*'X264')
-    print(os.getcwd())
+    # we are using avc1 codec for mp4
+    fourcc = cv2.VideoWriter_fourcc(*'avc1')
     writer = cv2.VideoWriter('./video/output/OUTPUT_VIDEO.mp4', apiPreference=0, fourcc=fourcc,
                              fps=video_fps[0], frameSize=(int(width), int(height)))
 
@@ -358,10 +373,11 @@ def create_caption_video(arrayWithCaptions):
 
         # Use putText() method for
         # inserting text on video
-        caption = arrayWithCaptions[counter][0]
+        # Show the caption in 2decimal places
+        caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1],2))
         if i % numberOfFramePerCaption == 0:
             counter += 1
-            caption = arrayWithCaptions[counter][0]
+            caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1],2))
         cv2.putText(frame,
                     caption,
                     (50, 50),
