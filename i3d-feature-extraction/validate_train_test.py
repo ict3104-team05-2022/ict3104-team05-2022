@@ -12,31 +12,35 @@ valid_videos = []
 # iterates through the json and adding each video id to valid_videos list
 for id in data:
     valid_videos.append(id)
-    # data_subset = data[id]['subset']
-    # print(data_subset)
-
-# lists all files in the RGB directory and saving it into all_videos list
-all_videos = []
-path = '../pipeline/data/RGB/Videos_mp4'
-files = os.listdir(path)
-
-for f in files:
-    all_videos.append(f[:-4])
-
-# displays length of each video list
-print(f"Number of valid videos from smarthome_cs_51.json: {len(valid_videos)}")
-print(f"Number of videos from TSU project RGB data folder: {len(all_videos)}")
-
-# displays length of matching video list
-matching_ids = set(valid_videos) & set(all_videos)
-print(f"Number of valid videos from the TSU project RGB data folder: {len(matching_ids)}")
-print(f"\nvalidate_train_test.py ran with a total of {len(matching_ids)} valid videos to extract features from.")
-print("valid_videos.txt containing file paths of valid videos saved to ./i3d-feature-extraction/sample")
-
-# writes the matching video file paths into a txt file
-with open('./sample/valid_videos.txt', 'w') as f:
-    for id in matching_ids:
-        f.write(f"{path}/{id}.mp4\n")
 
 # closes JSON file
 json_file.close()
+
+# lists all files in the RGB directory and saving it into extracted_videos list
+extracted_videos = []
+path = './output/RGB'
+files = os.listdir(path)
+
+for f in files:
+    extracted_videos.append(f.split('_')[0])
+
+# displays length of each video list
+print(f"current vids: {len(valid_videos)}")
+print(f"extracted vids: {len(extracted_videos)}")
+
+extracted_set = set(extracted_videos)
+missing_vids = []
+
+# removes video IDs that do not have RGB npy files
+for id in valid_videos:
+    if id not in extracted_videos:
+        data.pop(id)
+        missing_vids.append(id)
+        
+# creates new updated version of smarthome.json with removed video IDs
+with open('../pipeline/data/smarthome_CS_51_v2.json', "w") as outfile:
+    json.dump(data, outfile)
+
+print(f"missing vids: {', '.join(missing_vids)}")
+print(f"\n{len(missing_vids)} vids removed from smarthome_CS_51.json")
+print(f"smarthome_CS_51_v2.json saved to ./pipeline/data/")
