@@ -134,3 +134,6 @@ pipeline/data/RGB/
 
 NVIDIA-STEP-MODEL/STEP/pretrained/ava_step.pth
 *.mp4
+*.npy
+pipeline/results/PDAN_TSU_RGB/
+
