@@ -4,6 +4,7 @@ import os
 import argparse
 import sys
 import warnings
+
 warnings.filterwarnings("ignore")
 from tqdm import tqdm
 
@@ -20,7 +21,7 @@ def str2bool(v):
 parser = argparse.ArgumentParser()
 parser.add_argument('-mode', type=str, help='rgb or flow (or joint for eval)', default='rgb')  # added default parameter
 parser.add_argument('-train', type=str2bool, default='False', help='train or eval')
-parser.add_argument('-comp_info', type=str, default='PDAN_TSU_RGB') #change default from "" to "PDAN_TSU_RGB"
+parser.add_argument('-comp_info', type=str, default='PDAN_TSU_RGB')  # change default from "" to "PDAN_TSU_RGB"
 parser.add_argument('-rgb_model_file', type=str, default='')
 parser.add_argument('-flow_model_file', type=str)
 parser.add_argument('-gpu', type=str, default='4')
@@ -38,10 +39,10 @@ parser.add_argument('-load_model', type=str,
 parser.add_argument('-num_channel', type=str,
                     default='512')  # change default from "False" to "512" (just random no idea why 3)
 parser.add_argument('-batch_size', type=str, default='2')  # change default from "False" to "1"
-parser.add_argument('-kernelsize', type=str, default='3') # change default from "False" to "3"
+parser.add_argument('-kernelsize', type=str, default='3')  # change default from "False" to "3"
 parser.add_argument('-feat', type=str, default='False')
 parser.add_argument('-split_setting', type=str, default='CS')
-parser.add_argument('-input_video_file', type=str, default='P02T04C05',  help='input video file name')
+parser.add_argument('-input_video_file', type=str, default='P02T04C05', help='input video file name')
 parser.add_argument('-video_path', type=str, default='../data/P02T04C05.mp4', help='input video file path')
 parser.add_argument('-test', type=str2bool, default='False', help='train or eval')
 args, unknown = parser.parse_known_args()
@@ -131,33 +132,22 @@ def load_data_rgb_skeleton(train_split, val_split, root_skeleton, root_rgb):
     return dataloaders, datasets
 
 
-# activityList = ["Enter", "Walk", "Make_coffee.Get_water", "Make_tea/put something in sink", "unknown class 4",
-#                 "Use_Drawer", "unknown class 6", "Use_telephone",
-#                 "Leave", "Put_something_on_table", "Drink.From_glass", "unknown class 11", "unknown class 12",
-#                 "Drink.From_cup", "Dump_in_trash", "unknown class 15",
-#                 "unknown class 16", "Use_cupboard", "unknown class 18", "Read", "Drink.From_bottle", "Use_fridge",
-#                 "Wipe_table/clean dish with water", "unknown class 23",
-#                 "Eat_snack", "Sit_down", "Watch_TV", "Use_laptop", "Get_up", "Drink.From_bottle", "unknown class 30",
-#                 "unknown class 31",
-#                 "Lay_down", "unknown class 33", "Write", "Breakfast.Eat_at_table", "unknown class 36",
-#                 "unknown class 37", "unknown class 38", "Breakfast.Cut_bread",
-#                 "Clean_dishes.Dry_up", "unknown class 41", "Cook.Use_stove", "Cook.Cut", "unknown class 44",
-#                 "Cook.Stir", "Cook.Use_oven", "like uselaptop",
-#                 "unknown class 48", "unknown class 49", "unknown class 50"]
-
+# Activity List for Prediction
 activityList = ["Enter", "Walk", "Make_coffee", "Get_water", "Make_Coffee",
-            "Use_Drawer", "Make_coffee.Pour_grains", "Use_telephone",
-            "Leave", "Put_something_on_table", "Take_something_off_table", "Pour.From_kettle", "Stir_coffee/tea",
-            "Drink.From_cup", "Dump_in_trash", "Make_tea",
-            "Make_tea.Boil_water", "Use_cupboard", "Make_tea.Insert_tea_bag", "Read", "Take_pills", "Use_fridge",
-            "Clean_dishes", "Clean_dishes.Put_something_in_sink",
-            "Eat_snack", "Sit_down", "Watch_TV", "Use_laptop", "Get_up", "Drink.From_bottle", "Pour.From_bottle",
-            "Drink.From_glass",
-            "Lay_down", "Drink.From_can", "Write", "Breakfast", "Breakfast.Spread_jam_or_butter",
-            "Breakfast.Cut_bread", "Breakfast.Eat_at_table", "Breakfast.Take_ham",
-            "Clean_dishes.Dry_up", "Wipe_table", "Cook", "Cook.Cut", "Cook.Use_stove",
-            "Cook.Stir", "Cook.Use_oven", "Clean_dishes.Clean_with_water",
-            "Use_tablet", "Use_glasses", "Pour.From_can"]
+                "Use_Drawer", "Make_coffee.Pour_grains", "Use_telephone",
+                "Leave", "Put_something_on_table", "Take_something_off_table", "Pour.From_kettle", "Stir_coffee/tea",
+                "Drink.From_cup", "Dump_in_trash", "Make_tea",
+                "Make_tea.Boil_water", "Use_cupboard", "Make_tea.Insert_tea_bag", "Read", "Take_pills", "Use_fridge",
+                "Clean_dishes", "Clean_dishes.Put_something_in_sink",
+                "Eat_snack", "Sit_down", "Watch_TV", "Use_laptop", "Get_up", "Drink.From_bottle", "Pour.From_bottle",
+                "Drink.From_glass",
+                "Lay_down", "Drink.From_can", "Write", "Breakfast", "Breakfast.Spread_jam_or_butter",
+                "Breakfast.Cut_bread", "Breakfast.Eat_at_table", "Breakfast.Take_ham",
+                "Clean_dishes.Dry_up", "Wipe_table", "Cook", "Cook.Cut", "Cook.Use_stove",
+                "Cook.Stir", "Cook.Use_oven", "Clean_dishes.Clean_with_water",
+                "Use_tablet", "Use_glasses", "Pour.From_can"]
+
+
 # self declared (essentially works same as run() method)
 def val_file(models, num_epochs=50):
     probs = []
@@ -180,8 +170,6 @@ def val_file(models, num_epochs=50):
             # print("Array for max and index: ", arrayForMaxAndIndex)
         create_caption_video(arrayForMaxAndIndex)
         # print("Final array for both max and index: ", arrayForMaxAndIndex)
-
-
 
 
 def load_data(train_split, val_split, root):
@@ -386,10 +374,10 @@ def create_caption_video(arrayWithCaptions):
         # Use putText() method for
         # inserting text on video
         # Show the caption in 2decimal places
-        caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1],2))
+        caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1], 2))
         if i % numberOfFramePerCaption == 0:
             counter += 1
-            caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1],2))
+            caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1], 2))
         cv2.putText(frame,
                     caption,
                     (50, 80),
@@ -408,7 +396,7 @@ def create_caption_video(arrayWithCaptions):
         # TODO: Get it to run in within the cell as it runs
 
         # Uncomment to display the external video player frame
-        cv2.imshow('video', frame)
+        # cv2.imshow('video', frame)
 
         writer.write(frame)
 
@@ -416,10 +404,6 @@ def create_caption_video(arrayWithCaptions):
         # button for the video
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
-            cv2.destroyAllWindows()
-            break
-        if cv2.getWindowProperty('video', cv2.WND_PROP_VISIBLE) < 1:
-            print("ALL WINDOWS ARE CLOSED")
             cv2.destroyAllWindows()
             break
         if not ret:
@@ -436,6 +420,7 @@ def create_caption_video(arrayWithCaptions):
 
 if __name__ == '__main__':
     import torch
+
     __spec__ = None
     print(str(args.model))
     print('batch_size:', batch_size)
@@ -452,8 +437,8 @@ if __name__ == '__main__':
     print("Model: ", args.model)
     print("Load Model", args.load_model)
     if args.mode == 'flow':
-        print('flow mode', flow_root) #ownself commented
-        dataloaders, datasets = load_data(train_split, test_split, flow_root) #ownself commented
+        print('flow mode', flow_root)  # ownself commented
+        dataloaders, datasets = load_data(train_split, test_split, flow_root)  # ownself commented
     elif args.mode == 'skeleton':
         print('Pose mode', skeleton_root)
         dataloaders, datasets = load_data(train_split, test_split, skeleton_root)
