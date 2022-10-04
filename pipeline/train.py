@@ -5,6 +5,8 @@ import argparse
 import sys
 import torch
 
+import warnings
+warnings.filterwarnings("ignore")
 
 # Convert input variable to true or false
 def str2bool(v):
