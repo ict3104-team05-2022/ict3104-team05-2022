@@ -5,6 +5,8 @@ import argparse
 import sys
 import warnings
 warnings.filterwarnings("ignore")
+from tqdm import tqdm
+
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -40,9 +42,9 @@ parser.add_argument('-kernelsize', type=str, default='3') # change default from 
 parser.add_argument('-feat', type=str, default='False')
 parser.add_argument('-split_setting', type=str, default='CS')
 parser.add_argument('-input_video_file', type=str, default='P02T04C05',  help='input video file name')
-parser.add_argument('-input_video_full_path', type=str, default='../data/P02T04C05.mp4', help='input video file path')
+parser.add_argument('-video_path', type=str, default='../data/P02T04C05.mp4', help='input video file path')
 parser.add_argument('-test', type=str2bool, default='False', help='train or eval')
-args = parser.parse_args()
+args, unknown = parser.parse_known_args()
 
 import torch
 import torch.nn as nn
@@ -175,9 +177,9 @@ def val_file(models, num_epochs=50):
             indexOfMaxValue = activityAtEachFrameArray.index(maxValue)
             # print("Index of Max Value: ", indexOfMaxValue)
             arrayForMaxAndIndex.append([activityList[indexOfMaxValue], maxValue])
-            print("Array for max and index: ", arrayForMaxAndIndex)
+            # print("Array for max and index: ", arrayForMaxAndIndex)
         create_caption_video(arrayForMaxAndIndex)
-        print("Final array for both max and index: ", arrayForMaxAndIndex)
+        # print("Final array for both max and index: ", arrayForMaxAndIndex)
 
 
 
@@ -348,8 +350,11 @@ def val_step(model, gpu, dataloader, epoch):
 
 
 def create_caption_video(arrayWithCaptions):
-    video = args.input_video_full_path
+    video = filePath
+    print("video is: ", video)
     cap = cv2.VideoCapture(video)
+    print("cap is: ", cap)
+    print("Len", len(arrayWithCaptions))
     print("No: ", cap.get(cv2.CAP_PROP_FRAME_COUNT))
     length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     numberOfFramePerCaption = math.ceil(length / len(arrayWithCaptions))
@@ -361,7 +366,8 @@ def create_caption_video(arrayWithCaptions):
     fourcc = cv2.VideoWriter_fourcc(*'avc1')
     writer = cv2.VideoWriter('./video/output/OUTPUT_VIDEO.mp4', apiPreference=0, fourcc=fourcc,
                              fps=video_fps[0], frameSize=(int(width), int(height)))
-
+    # Progress bar
+    pbar = tqdm(total=length)
     i = 1  # frame counter
     counter = 0  # counter for arrayWithCaptions
     while True:
@@ -370,7 +376,13 @@ def create_caption_video(arrayWithCaptions):
         # describe the type of font
         # to be used.
         font = cv2.FONT_HERSHEY_SIMPLEX
-
+        cv2.putText(frame,
+                    "Predicted:",
+                    (50, 50),
+                    font, 0.5,
+                    (0, 0, 0),
+                    2,
+                    cv2.LINE_4)
         # Use putText() method for
         # inserting text on video
         # Show the caption in 2decimal places
@@ -380,11 +392,15 @@ def create_caption_video(arrayWithCaptions):
             caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1],2))
         cv2.putText(frame,
                     caption,
-                    (50, 50),
-                    font, 1,
+                    (50, 80),
+                    font, 0.5,
                     (0, 0, 0),
                     2,
                     cv2.LINE_4)
+
+        # Show the progress bar
+        pbar.set_description(f"Generating video:.... {i}")
+        pbar.update(1)
 
         i += 1
 
@@ -408,6 +424,8 @@ def create_caption_video(arrayWithCaptions):
             break
         if not ret:
             break
+        if i > length:
+            break
 
     writer.release()
     # release the cap object
@@ -426,6 +444,13 @@ if __name__ == '__main__':
     fileName = args.input_video_file
     # Remove .mp4 from fileName
     fileName = fileName[:-4]
+    print("File name: ", fileName)
+    filePath = args.video_path
+    if filePath[0] == '\'':
+        filePath = filePath[1:-1]
+    print("FilePath: ", filePath)
+    print("Model: ", args.model)
+    print("Load Model", args.load_model)
     if args.mode == 'flow':
         print('flow mode', flow_root) #ownself commented
         dataloaders, datasets = load_data(train_split, test_split, flow_root) #ownself commented
