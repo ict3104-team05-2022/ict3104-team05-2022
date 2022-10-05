@@ -1,4 +1,6 @@
 from __future__ import division
+
+import csv
 import time
 import os
 import argparse
@@ -349,14 +351,16 @@ def create_caption_video(arrayWithCaptions):
     numberOfFramePerCaption = math.ceil(length / len(arrayWithCaptions))
     # Get video metadata
     video_fps = cap.get(cv2.CAP_PROP_FPS),
-    height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT) # 480.0
+    width = cap.get(cv2.CAP_PROP_FRAME_WIDTH) # 640.0
+
     # we are using avc1 codec for mp4
     fourcc = cv2.VideoWriter_fourcc(*'avc1')
     writer = cv2.VideoWriter('./video/output/' + f'{fileName}' + '_caption.mp4', apiPreference=0, fourcc=fourcc,
                              fps=video_fps[0], frameSize=(int(width), int(height + 100)))
 
-    # Import training video's annotations
+
+    # Import training video's annotations:
 
     # Get list of directory names into an array list
     annotations_directory_list = list()
@@ -376,35 +380,59 @@ def create_caption_video(arrayWithCaptions):
     # Route to directory based on video file name
     # print('fileName[:3] ' + fileName[:3]) # P02
 
-    for dir in edited_annotations_directory_list:
-        print('edited_annotations_directory_list dir: ', dir)
-        if fileName[:3] in edited_annotations_directory_list:
-            dfi = pd.read_csv("./data/Annotation/" + dir + '/' + str(fileName + '.csv'))
-            print(dfi)
-            break
+    # Extract all the data from csv's column into lists
+    events = list()
+    start_frames = list()
+    end_frames = list()
 
-    # def pipeline(frame):
-    #     try:
-    #         cv2.putText(frame, str(next(dfi)[1].sentence), (0, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 3, cv2.LINE_AA, True)
-    #     except StopIteration:
-    #         pass
-    #     # additional frame manipulation
-    #     return frame
+    for dir in edited_annotations_directory_list:
+        # print('edited_annotations_directory_list dir: ', dir)
+        if fileName[:3] in edited_annotations_directory_list:
+            # csv_annotations = pd.read_csv(open("./data/Annotation/" + dir + '/' + str(fileName + '.csv')"))
+            # print(csv_annotations)
+
+            with open("./data/Annotation/" + dir + '/' + str(fileName + '.csv'), 'r') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    events.append(row.get('event'))
+                    start_frames.append(row.get('start_frame'))
+                    end_frames.append(row.get('end_frame'))
+
+        break
+
+    # print(str(events))
+    # ['Watch_TV', 'Read', 'Watch_TV', 'Read', 'Watch_TV', 'Read', 'Watch_TV', 'Read', 'Watch_TV', 'Read', 'Watch_TV', 'Read', 'Watch_TV', 'Read', 'Watch_TV', 'Read', 'Watch_TV', 'Read']
+    # print(str(start_frames))
+    # ['0', '1191', '1368', '1764', '2901', '6422', '8474', '9863', '11336', '12615', '15446', '15761', '16046', '16664', '18209', '18609', '21864', '22264']
+    # print(str(end_frames))
+    # ['1171', '1368', '1709', '2862', '6422', '8474', '9854', '11335', '12614', '15437', '15761', '16041', '16666', '18204', '18589', '21849', '22259', '22694']
 
     # Progress bar
     pbar = tqdm(total=length)
-    i = 1  # frame counter
+    i = 0  # frame counter
     counter = 0  # counter for arrayWithCaptions
+    index = 0 # Pointer to indicate which event begins and ends in the start frames and end frames
+
     while True:
         # Capture frames in the video
         ret, frame = cap.read()
-        # describe the type of font
-        # to be used.
+        # describe the type of font to be used.
 
         # Add white background for video inference captions
         image = cv2.copyMakeBorder(frame, 0, 100, 0, 0, cv2.BORDER_CONSTANT, None, value = (255,255,255))
 
-        # Show inference's model prediction captions
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        # Use putText() method for
+        # inserting text on video
+        cv2.putText(image,
+                    "Ground Truth:",
+                    (200, int(height + 50)),
+                    font, 0.5,
+                    (0, 0, 0),
+                    2,
+                    cv2.LINE_4)
+
+        # Show inference model prediction captions
         # Show the caption in 2 decimal places
 
         font = cv2.FONT_HERSHEY_SIMPLEX
@@ -417,6 +445,35 @@ def create_caption_video(arrayWithCaptions):
                     (0, 0, 0),
                     2,
                     cv2.LINE_4)
+
+        cv2.putText(image,
+                    "Frame Num:",
+                    (400, int(height + 50)),
+                    font, 0.5,
+                    (0, 0, 0),
+                    2,
+                    cv2.LINE_4)
+
+        cv2.putText(image,
+                    str(i),
+                    (400, int(height + 70)),
+                    font, 0.5,
+                    (0, 0, 0),
+                    2,
+                    cv2.LINE_4)
+
+        # Show inference model ground truth for comparisons
+        if i > int(end_frames[index]):
+            index += 1
+
+        if i >= int(start_frames[index]) and i <= int(end_frames[index]):
+            cv2.putText(image,
+                        events[index],
+                        (200, int(height + 70)),
+                        font, 0.5,
+                        (0, 0, 0),
+                        2,
+                        cv2.LINE_4)
 
         caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1], 2))
         if i % numberOfFramePerCaption == 0:
@@ -439,7 +496,7 @@ def create_caption_video(arrayWithCaptions):
         i += 1
 
         # Uncomment to display the external video player frame
-        # cv2.imshow('video', image)
+        cv2.imshow('video', image)
         writer.write(image)
 
         # creating 'q' as the quit
