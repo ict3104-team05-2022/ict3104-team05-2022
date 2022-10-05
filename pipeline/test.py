@@ -353,7 +353,11 @@ def create_caption_video(arrayWithCaptions):
     # we are using avc1 codec for mp4
     fourcc = cv2.VideoWriter_fourcc(*'avc1')
     writer = cv2.VideoWriter('./video/output/' + f'{fileName}' + '_caption.mp4', apiPreference=0, fourcc=fourcc,
-                             fps=video_fps[0], frameSize=(int(width), int(height)))
+                             fps=video_fps[0], frameSize=(int(width), int(height + 100)))
+
+    # print('video height: ' + str(height)) # 480.0
+    # print('video width: ' + str(width)) # 640.0
+
     # Progress bar
     pbar = tqdm(total=length)
     i = 1  # frame counter
@@ -363,24 +367,31 @@ def create_caption_video(arrayWithCaptions):
         ret, frame = cap.read()
         # describe the type of font
         # to be used.
+
+        # Add white background for video inference captions
+        image = cv2.copyMakeBorder(frame, 0, 100, 0, 0, cv2.BORDER_CONSTANT, None, value = (255,255,255))
+
+        # Use putText() method for
+        # inserting text on video
+        # Show the caption in 2 decimal places
         font = cv2.FONT_HERSHEY_SIMPLEX
-        cv2.putText(frame,
+        cv2.putText(image,
                     "Predicted:",
-                    (50, 50),
+                    (10, int(height + 50)),
                     font, 0.5,
                     (0, 0, 0),
                     2,
                     cv2.LINE_4)
-        # Use putText() method for
-        # inserting text on video
-        # Show the caption in 2decimal places
+
         caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1], 2))
         if i % numberOfFramePerCaption == 0:
             counter += 1
             caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1], 2))
-        cv2.putText(frame,
+
+        # overlay captions on the frame with background (image)
+        cv2.putText(image,
                     caption,
-                    (50, 80),
+                    (10, int(height + 70)),
                     font, 0.5,
                     (0, 0, 0),
                     2,
@@ -392,13 +403,9 @@ def create_caption_video(arrayWithCaptions):
 
         i += 1
 
-        # Display the resulting frame
-        # TODO: Get it to run in within the cell as it runs
-
         # Uncomment to display the external video player frame
-        # cv2.imshow('video', frame)
-
-        writer.write(frame)
+        # cv2.imshow('video', image)
+        writer.write(image)
 
         # creating 'q' as the quit
         # button for the video
