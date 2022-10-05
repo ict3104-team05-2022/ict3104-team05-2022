@@ -5,6 +5,9 @@ import argparse
 import sys
 import torch
 
+import warnings
+warnings.filterwarnings("ignore")
+
 # Convert input variable to true or false
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -13,6 +16,7 @@ def str2bool(v):
         return False
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
+
 
 # Add parameter arguments to the parser
 parser = argparse.ArgumentParser()
@@ -39,7 +43,7 @@ parser.add_argument('-feat', type=str, default='False')
 parser.add_argument('-split_setting', type=str, default='CS')
 args = parser.parse_args()
 
-#Import neccessary libraries
+# Import neccessary libraries
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -48,9 +52,9 @@ import numpy as np
 import random
 
 # set random seed
-if args.randomseed=="False":
+if args.randomseed == "False":
     SEED = 0
-elif args.randomseed=="True":
+elif args.randomseed == "True":
     SEED = random.randint(1, 100000)
 else:
     SEED = int(args.randomseed)
@@ -73,45 +77,44 @@ import json
 import pickle
 import math
 
-
-
 if str(args.APtype) == 'map':
     from apmeter import APMeter
-
 
 batch_size = int(args.batch_size)
 
 # If it is TSU dataset, load the data to train_spilt and test_split
 if args.dataset == 'TSU':
-    split_setting=str(args.split_setting)
-    
+    split_setting = str(args.split_setting)
+
     from smarthome_i3d_per_video import TSU as Dataset
     from smarthome_i3d_per_video import TSU_collate_fn as collate_fn
-    classes=51
-    
-    if split_setting =='CS':
-        train_split = './pipeline/data/smarthome_CS_51.json'
-        test_split = './pipeline/data/smarthome_CS_51.json'
-        
-    elif split_setting =='CV':
-        train_split = './pipeline/data/smarthome_CV_51.json'
-        test_split = './pipeline/data/smarthome_CV_51.json'
-    
-    #Unknown ?
-    rgb_root = './pipeline/data/RGB'
-    skeleton_root='./pipeline/data/Skeleton' 
+
+    classes = 51
+
+    if split_setting == 'CS':
+        train_split = './data/smarthome_CS_51.json'
+        test_split = './data/smarthome_CS_51.json'
+
+    elif split_setting == 'CV':
+        train_split = './data/smarthome_CV_51.json'
+        test_split = './data/smarthome_CV_51.json'
+
+    # Unknown ?
+    rgb_root = './data/i3d'
+    skeleton_root = './data/Skeleton'
+
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
+
 # Load RGB skeleton data
 def load_data_rgb_skeleton(train_split, val_split, root_skeleton, root_rgb):
-
     # Load training data to Pytorch dataloader
     if len(train_split) > 0:
         dataset = Dataset(train_split, 'training', root_skeleton, root_rgb, batch_size, classes)
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0,
-                                                 pin_memory=True, collate_fn=collate_fn) # 8
+                                                 pin_memory=True, collate_fn=collate_fn)  # 8
     # Load validation data to Pytorch dataloader
     else:
         dataset = None
@@ -119,7 +122,7 @@ def load_data_rgb_skeleton(train_split, val_split, root_skeleton, root_rgb):
 
     val_dataset = Dataset(val_split, 'testing', root_skeleton, root_rgb, batch_size, classes)
     val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=1, shuffle=True, num_workers=0,
-                                                 pin_memory=True, collate_fn=collate_fn) #2
+                                                 pin_memory=True, collate_fn=collate_fn)  # 2
 
     dataloaders = {'train': dataloader, 'val': val_dataloader}
     datasets = {'train': dataset, 'val': val_dataset}
@@ -128,19 +131,19 @@ def load_data_rgb_skeleton(train_split, val_split, root_skeleton, root_rgb):
 
 def load_data(train_split, val_split, root):
     # Load Data
-  
+    # Change from 8 to 2
     if len(train_split) > 0:
         dataset = Dataset(train_split, 'training', root, batch_size, classes)
-        dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=8,
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=1,
                                                  pin_memory=True, collate_fn=collate_fn)
         dataloader.root = root
     else:
 
         dataset = None
         dataloader = None
-
+    # Change from 2 to 1
     val_dataset = Dataset(val_split, 'testing', root, batch_size, classes)
-    val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=1, shuffle=True, num_workers=2,
+    val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=1, shuffle=True, num_workers=1,
                                                  pin_memory=True, collate_fn=collate_fn)
     val_dataloader.root = root
 
@@ -152,7 +155,7 @@ def load_data(train_split, val_split, root):
 # train the model
 def run(models, criterion, num_epochs=50):
     since = time.time()
-
+    best_model = None
     best_map = 0.0
     for epoch in range(num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
@@ -167,9 +170,18 @@ def run(models, criterion, num_epochs=50):
 
             if best_map < val_map:
                 best_map = val_map
-                torch.save(model.state_dict(),'./'+str(args.model)+'/weight_epoch_'+str(args.lr)+'_'+str(epoch))
-                torch.save(model,'./'+str(args.model)+'/model_epoch_'+str(args.lr)+'_'+str(epoch))
-                print('save here:','./'+str(args.model)+'/weight_epoch_'+str(args.lr)+'_'+str(epoch))
+                best_model = model
+                torch.save(model.state_dict(),
+                           './results/' + str(args.model) + '/weight_epoch_' + str(args.lr) + '_' + str(epoch))
+                torch.save(model, './results/' + str(args.model) + '/model_epoch_' + str(args.lr) + '_' + str(epoch))
+                print('save here for model: ',
+                      './results/' + str(args.model) + '/model_epoch_' + str(args.lr) + '_' + str(epoch))
+                print('save here for weight:',
+                      './results/' + str(args.model) + '/weight_epoch_' + str(args.lr) + '_' + str(epoch))
+
+    # Save the best model
+    torch.save(best_model, './models/test')
+
 
 # Eval the model
 def eval_model(model, dataloader, baseline=False):
@@ -181,6 +193,7 @@ def eval_model(model, dataloader, baseline=False):
 
         results[other[0][0]] = (outputs.data.cpu().numpy()[0], probs.data.cpu().numpy()[0], data[2].numpy()[0], fps)
     return results
+
 
 # Run the model through the network
 def run_network(model, data, gpu, epoch=0, baseline=False):
@@ -199,24 +212,25 @@ def run_network(model, data, gpu, epoch=0, baseline=False):
 
     inputs = inputs.squeeze(3).squeeze(3)
     activation = model(inputs, mask_new)
-    
+
     outputs_final = activation
 
-    if args.model=="PDAN":
+    if args.model == "PDAN_TSU_RGB":
         # print('outputs_final1', outputs_final.size())
-        outputs_final = outputs_final[:,0,:,:]
+        outputs_final = outputs_final[:, 0, :, :]
     # print('outputs_final',outputs_final.size())
-    outputs_final = outputs_final.permute(0, 2, 1)  
+    outputs_final = outputs_final.permute(0, 2, 1)
     probs_f = F.sigmoid(outputs_final) * mask.unsqueeze(2)
     loss_f = F.binary_cross_entropy_with_logits(outputs_final, labels, size_average=False)
-    loss_f = torch.sum(loss_f) / torch.sum(mask)  
+    loss_f = torch.sum(loss_f) / torch.sum(mask)
 
-    loss = loss_f 
+    loss = loss_f
 
     corr = torch.sum(mask)
     tot = torch.sum(mask)
 
     return outputs_final, loss, probs_f, corr / tot
+
 
 # Train the model
 def train_step(model, gpu, optimizer, dataloader, epoch):
@@ -246,6 +260,7 @@ def train_step(model, gpu, optimizer, dataloader, epoch):
 
     return train_map, epoch_loss
 
+
 # validate the model
 def val_step(model, gpu, dataloader, epoch):
     model.train(False)
@@ -274,7 +289,6 @@ def val_step(model, gpu, dataloader, epoch):
         full_probs[other[0][0]] = probs.data.cpu().numpy().T
 
     epoch_loss = tot_loss / num_iter
-
 
     val_map = torch.sum(100 * apm.value()) / torch.nonzero(100 * apm.value()).size()[0]
     print('val-map:', val_map)
@@ -307,27 +321,26 @@ if __name__ == '__main__':
             input_channnel = 1024
 
         num_classes = classes
-        mid_channel=int(args.num_channel)
+        mid_channel = int(args.num_channel)
 
-
-        if args.model=="PDAN":
-            print("you are processing PDAN")
+        if args.model == "PDAN_TSU_RGB":
+            print("you are processing PDAN_TSU_RGB")
             from models import PDAN as Net
+
             model = Net(num_stages=1, num_layers=5, num_f_maps=mid_channel, dim=input_channnel, num_classes=classes)
 
+        model = torch.nn.DataParallel(model)
 
-        model=torch.nn.DataParallel(model)
-
-        if args.load_model!= "False":
+        if args.load_model != "False":
             # entire model
             model = torch.load(args.load_model, map_location=torch.device('cpu'))
             # weight
             # model.load_state_dict(torch.load(str(args.load_model)))
-            print("loaded",args.load_model)
+            print("loaded", args.load_model)
 
         pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
         print('pytorch_total_params', pytorch_total_params)
-        print('num_channel:', num_channel, 'input_channnel:', input_channnel,'num_classes:', num_classes)
+        print('num_channel:', num_channel, 'input_channnel:', input_channnel, 'num_classes:', num_classes)
         model.cuda()
 
         criterion = nn.NLLLoss(reduce=False)
@@ -336,6 +349,3 @@ if __name__ == '__main__':
         optimizer = optim.Adam(model.parameters(), lr=lr)
         lr_sched = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=8, verbose=True)
         run([(model, 0, dataloaders, optimizer, lr_sched, args.comp_info)], criterion, num_epochs=int(args.epoch))
-
-
-

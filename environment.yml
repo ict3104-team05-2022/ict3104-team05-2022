@@ -1,4 +1,4 @@
-name: ict3104
+name: ict3104v2
 channels:
   - conda-forge
 dependencies:
@@ -7,3 +7,5 @@ dependencies:
   - pip:
       - --find-links https://download.pytorch.org/whl/torch_stable.html
       - --requirement requirements.txt
+
+
