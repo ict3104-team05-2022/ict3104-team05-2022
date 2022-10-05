@@ -352,7 +352,7 @@ def create_caption_video(arrayWithCaptions):
     width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
     # we are using avc1 codec for mp4
     fourcc = cv2.VideoWriter_fourcc(*'avc1')
-    writer = cv2.VideoWriter('./video/output/OUTPUT_VIDEO.mp4', apiPreference=0, fourcc=fourcc,
+    writer = cv2.VideoWriter('./video/output/' + f'{fileName}' + '_caption.mp4', apiPreference=0, fourcc=fourcc,
                              fps=video_fps[0], frameSize=(int(width), int(height)))
     # Progress bar
     pbar = tqdm(total=length)
