@@ -4,6 +4,7 @@ import os
 import argparse
 import sys
 import warnings
+import pandas as pd
 
 warnings.filterwarnings("ignore")
 from tqdm import tqdm
@@ -148,7 +149,7 @@ activityList = ["Enter", "Walk", "Make_coffee", "Get_water", "Make_Coffee",
                 "Use_tablet", "Use_glasses", "Pour.From_can"]
 
 
-# self declared (essentially works same as run() method)
+# self-declared (essentially works same as run() method)
 def val_file(models, num_epochs=50):
     probs = []
     for model, gpu, dataloader, optimizer, sched, model_file in models:
@@ -355,8 +356,21 @@ def create_caption_video(arrayWithCaptions):
     writer = cv2.VideoWriter('./video/output/' + f'{fileName}' + '_caption.mp4', apiPreference=0, fourcc=fourcc,
                              fps=video_fps[0], frameSize=(int(width), int(height + 100)))
 
-    # print('video height: ' + str(height)) # 480.0
-    # print('video width: ' + str(width)) # 640.0
+    # Import training video's annotations
+
+    # def pipeline(frame):
+    #     try:
+    #         cv2.putText(frame, str(next(dfi)[1].sentence), (0, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 3, cv2.LINE_AA, True)
+    #     except StopIteration:
+    #         pass
+    #     # additional frame manipulation
+    #     return frame
+
+    if fileName[:3] == 'P02':
+        dfi = pd.read_csv(str(fileName + '.csv')).iterrows()
+        print('Contents of dfi: ' + dfi)
+
+
 
     # Progress bar
     pbar = tqdm(total=length)
@@ -371,10 +385,16 @@ def create_caption_video(arrayWithCaptions):
         # Add white background for video inference captions
         image = cv2.copyMakeBorder(frame, 0, 100, 0, 0, cv2.BORDER_CONSTANT, None, value = (255,255,255))
 
+
+
+
+
+        # Show inference's model prediction captions
+        # Show the caption in 2 decimal places
+
+        font = cv2.FONT_HERSHEY_SIMPLEX
         # Use putText() method for
         # inserting text on video
-        # Show the caption in 2 decimal places
-        font = cv2.FONT_HERSHEY_SIMPLEX
         cv2.putText(image,
                     "Predicted:",
                     (10, int(height + 50)),
