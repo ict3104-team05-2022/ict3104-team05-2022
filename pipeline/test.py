@@ -358,6 +358,31 @@ def create_caption_video(arrayWithCaptions):
 
     # Import training video's annotations
 
+    # Get list of directory names into an array list
+    annotations_directory_list = list()
+    for root, dirs, files in os.walk("./data/Annotation", topdown=False):
+        for name in dirs:
+            annotations_directory_list.append(os.path.join(root, name))
+
+    # print('directory name 3 letters: ' + annotations_directory_list[0][-3:]) # P02
+    # print('filename in captions area ' + fileName) # P02T05C05
+
+    # Strip away characters to leave only the file name
+    edited_annotations_directory_list = list()
+    for dir in annotations_directory_list:
+        strip = "./data/Annotation\\"
+        edited_annotations_directory_list.append(dir.lstrip(strip)) # ['P02', 'P03', 'P04', 'XYZ'...]
+
+    # Route to directory based on video file name
+    # print('fileName[:3] ' + fileName[:3]) # P02
+
+    for dir in edited_annotations_directory_list:
+        print('edited_annotations_directory_list dir: ', dir)
+        if fileName[:3] in edited_annotations_directory_list:
+            dfi = pd.read_csv("./data/Annotation/" + dir + '/' + str(fileName + '.csv'))
+            print(dfi)
+            break
+
     # def pipeline(frame):
     #     try:
     #         cv2.putText(frame, str(next(dfi)[1].sentence), (0, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 3, cv2.LINE_AA, True)
@@ -365,12 +390,6 @@ def create_caption_video(arrayWithCaptions):
     #         pass
     #     # additional frame manipulation
     #     return frame
-
-    if fileName[:3] == 'P02':
-        dfi = pd.read_csv(str(fileName + '.csv')).iterrows()
-        print('Contents of dfi: ' + dfi)
-
-
 
     # Progress bar
     pbar = tqdm(total=length)
@@ -384,10 +403,6 @@ def create_caption_video(arrayWithCaptions):
 
         # Add white background for video inference captions
         image = cv2.copyMakeBorder(frame, 0, 100, 0, 0, cv2.BORDER_CONSTANT, None, value = (255,255,255))
-
-
-
-
 
         # Show inference's model prediction captions
         # Show the caption in 2 decimal places
