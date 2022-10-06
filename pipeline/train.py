@@ -78,6 +78,10 @@ import json
 import pickle
 import math
 
+from tqdm.auto import trange
+from tqdm.auto import tqdm
+from time import sleep
+
 if str(args.APtype) == 'map':
     from apmeter import APMeter
 
@@ -157,27 +161,37 @@ def run(models, criterion, num_epochs=50):
     since = time.time()
     best_model = None
     best_map = 0.0
-    for epoch in range(num_epochs):
-        print('Epoch {}/{}'.format(epoch, num_epochs - 1))
-        print('-' * 10)
+    pbar = trange(num_epochs, desc='All epoch')
+    for idx, epoch in enumerate(pbar):
+    #for epoch in range(num_epochs):
+        #print('Epoch {}/{}'.format(epoch, num_epochs - 1))
+        #print('-' * 10)
 
-        probs = []
-        for model, gpu, dataloader, optimizer, sched, model_file in models:
-            train_map, train_loss = train_step(model, gpu, optimizer, dataloader['train'], epoch)
-            prob_val, val_loss, val_map = val_step(model, gpu, dataloader['val'], epoch)
-            probs.append(prob_val)
-            sched.step(val_loss)
+            probs = []
+            for model, gpu, dataloader, optimizer, sched, model_file in models:
+                with tqdm(dataloader['train'], unit="batch") as tepoch:
+                    tepoch.set_description('Epoch {}/{} train'.format(epoch, num_epochs - 1))
+                    train_map, train_loss = train_step(model, gpu, optimizer, tepoch, epoch)
 
-            if best_map < val_map:
-                best_map = val_map
-                best_model = model
-                torch.save(model.state_dict(),
-                           './results/' + str(args.model) + '/weight_epoch_' + str(args.lr) + '_' + str(epoch))
-                torch.save(model, './results/' + str(args.model) + '/model_epoch_' + str(args.lr) + '_' + str(epoch))
-                print('save here for model: ',
-                      './results/' + str(args.model) + '/model_epoch_' + str(args.lr) + '_' + str(epoch))
-                print('save here for weight:',
-                      './results/' + str(args.model) + '/weight_epoch_' + str(args.lr) + '_' + str(epoch))
+                with tqdm(dataloader['val'], unit="batch") as tepoch:
+                    tepoch.set_description('Epoch {}/{} eval'.format(epoch, num_epochs - 1))
+                    prob_val, val_loss, val_map = val_step(model, gpu, tepoch, epoch)
+                    probs.append(prob_val)
+                    sched.step(val_loss)
+
+
+
+                    if best_map < val_map:
+                        best_map = val_map
+                        pbar.set_postfix({'loss':val_loss.item(),'best accuracy':best_map.item()})
+                        best_model = model
+                        torch.save(model.state_dict(),
+                                   './results/' + str(args.model) + '/weight_epoch_' + str(args.lr) + '_' + str(epoch))
+                        torch.save(model, './results/' + str(args.model) + '/model_epoch_' + str(args.lr) + '_' + str(epoch))
+                        #print('save here for model: ',
+                        #      './results/' + str(args.model) + '/model_epoch_' + str(args.lr) + '_' + str(epoch))
+                        #print('save here for weight:',
+                        #      './results/' + str(args.model) + '/weight_epoch_' + str(args.lr) + '_' + str(epoch))
 
     # Save the best model
     torch.save(best_model, './models/PDAN_TSU_RGB')
@@ -249,15 +263,19 @@ def train_step(model, gpu, optimizer, dataloader, epoch):
         tot_loss += loss.data
         loss.backward()
         optimizer.step()
+
+        dataloader.set_postfix({'loss':(tot_loss / num_iter).item(), 'accuracy':(100 * apm.value().mean()).item()})
+        sleep(0.1)
+
     if args.APtype == 'wap':
         train_map = 100 * apm.value()
     else:
         train_map = 100 * apm.value().mean()
-    print('train-map:', train_map)
+    #print('train-map:', train_map)
     apm.reset()
 
     epoch_loss = tot_loss / num_iter
-    print('epoch-loss:', epoch_loss)
+    #print('epoch-loss:', epoch_loss)
     return train_map, epoch_loss
 
 
@@ -288,11 +306,14 @@ def val_step(model, gpu, dataloader, epoch):
 
         full_probs[other[0][0]] = probs.data.cpu().numpy().T
 
+        dataloader.set_postfix({'loss':(tot_loss / num_iter).item(), 'accuracy':(torch.sum(100 * apm.value()) / torch.nonzero(100 * apm.value()).size()[0]).item()})
+        sleep(0.1)
+
     epoch_loss = tot_loss / num_iter
 
     val_map = torch.sum(100 * apm.value()) / torch.nonzero(100 * apm.value()).size()[0]
-    print('val-map:', val_map)
-    print(100 * apm.value())
+    #print('val-map:', val_map)
+    #print(100 * apm.value())
     apm.reset()
 
     return full_probs, epoch_loss, val_map
@@ -345,7 +366,7 @@ if __name__ == '__main__':
 
         criterion = nn.NLLLoss(reduce=False)
         lr = float(args.lr)
-        print(lr)
+        # print(lr)
         optimizer = optim.Adam(model.parameters(), lr=lr)
         lr_sched = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=8, verbose=True)
         run([(model, 0, dataloaders, optimizer, lr_sched, args.comp_info)], criterion, num_epochs=int(args.epoch))
