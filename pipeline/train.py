@@ -41,6 +41,7 @@ parser.add_argument('-batch_size', type=str, default='False')
 parser.add_argument('-kernelsize', type=str, default='False')
 parser.add_argument('-feat', type=str, default='False')
 parser.add_argument('-split_setting', type=str, default='CS')
+parser.add_argument('-input_folder', type=str, default='./data/i3d')
 args = parser.parse_args()
 
 # Import neccessary libraries
@@ -100,9 +101,8 @@ if args.dataset == 'TSU':
         test_split = './data/smarthome_CV_51.json'
 
     # Unknown ?
-    rgb_root = './data/i3d'
+    rgb_root = args.input_folder
     skeleton_root = './data/Skeleton'
-
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
@@ -180,7 +180,7 @@ def run(models, criterion, num_epochs=50):
                       './results/' + str(args.model) + '/weight_epoch_' + str(args.lr) + '_' + str(epoch))
 
     # Save the best model
-    torch.save(best_model, './models/test')
+    torch.save(best_model, './models/PDAN_TSU_RGB')
 
 
 # Eval the model
@@ -257,7 +257,7 @@ def train_step(model, gpu, optimizer, dataloader, epoch):
     apm.reset()
 
     epoch_loss = tot_loss / num_iter
-
+    print('epoch-loss:', epoch_loss)
     return train_map, epoch_loss
 
 
