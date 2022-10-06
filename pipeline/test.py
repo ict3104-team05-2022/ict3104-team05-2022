@@ -436,8 +436,6 @@ def create_caption_video(arrayWithCaptions):
         # Show the caption in 2 decimal places
 
         font = cv2.FONT_HERSHEY_SIMPLEX
-        # Use putText() method for
-        # inserting text on video
         cv2.putText(image,
                     "Predicted:",
                     (10, int(height + 50)),
@@ -454,6 +452,7 @@ def create_caption_video(arrayWithCaptions):
                     2,
                     cv2.LINE_4)
 
+        # Frame number
         cv2.putText(image,
                     str(i),
                     (400, int(height + 70)),
@@ -476,9 +475,14 @@ def create_caption_video(arrayWithCaptions):
                         cv2.LINE_4)
 
         caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1], 2))
-        if i % numberOfFramePerCaption == 0:
-            counter += 1
-            caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1], 2))
+
+
+        try:
+            if i % numberOfFramePerCaption == 0:
+                counter += 1
+                caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1], 2))
+        except IndexError:
+            break
 
         # overlay captions on the frame with background (image)
         cv2.putText(image,
@@ -496,7 +500,7 @@ def create_caption_video(arrayWithCaptions):
         i += 1
 
         # Uncomment to display the external video player frame
-        cv2.imshow('video', image)
+        # cv2.imshow('video', image)
         writer.write(image)
 
         # creating 'q' as the quit
@@ -515,6 +519,8 @@ def create_caption_video(arrayWithCaptions):
     cap.release()
     # close all windows
     cv2.destroyAllWindows()
+
+    print('Video Inference Processing complete!')
 
 
 if __name__ == '__main__':
