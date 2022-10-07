@@ -1,12 +1,11 @@
 from __future__ import division
 
-import csv
-import time
-import os
 import argparse
+import csv
+import os
 import sys
+import time
 import warnings
-import pandas as pd
 
 warnings.filterwarnings("ignore")
 from tqdm import tqdm
@@ -76,12 +75,8 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 print('Random_SEED!!!:', SEED)
 
-from torch.optim import lr_scheduler
 from torch.autograd import Variable
 
-import json
-
-import pickle
 import math
 
 if str(args.APtype) == 'map':
@@ -159,19 +154,18 @@ def val_file(models, num_epochs=50):
         probs.append(prob_val)
         sched.step(val_loss)
         arrayForMaxAndIndex = []
-        for index in range(len(prob_val.get(fileName)[1])):
-            # get the highest prob class at each frame from 51 activity.
-            activityAtEachFrameArray = []
-            for index1 in range(len(prob_val.get(fileName))):
-                activityAtEachFrameArray.append(prob_val.get(fileName)[index1][index])
-            # print("Activity at each frame: ", activityAtEachFrameArray)
-            maxValue = max(activityAtEachFrameArray)
-            # print("Max Value: ", maxValue)
-            indexOfMaxValue = activityAtEachFrameArray.index(maxValue)
-            # print("Index of Max Value: ", indexOfMaxValue)
-            arrayForMaxAndIndex.append([activityList[indexOfMaxValue], maxValue])
-            # print("Array for max and index: ", arrayForMaxAndIndex)
-        create_caption_video(arrayForMaxAndIndex)
+        try:
+            for index in range(len(prob_val.get(fileName)[1])):
+                # get the highest prob class at each frame from 51 activity.
+                activityAtEachFrameArray = []
+                for index1 in range(len(prob_val.get(fileName))):
+                    activityAtEachFrameArray.append(prob_val.get(fileName)[index1][index])
+                maxValue = max(activityAtEachFrameArray)
+                indexOfMaxValue = activityAtEachFrameArray.index(maxValue)
+                arrayForMaxAndIndex.append([activityList[indexOfMaxValue], maxValue])
+            create_caption_video(arrayForMaxAndIndex)
+        except TypeError:
+            print("Please ensure that the video file belong to the testing subset in the smart home cs51 dataset.")
         # print("Final array for both max and index: ", arrayForMaxAndIndex)
 
 
@@ -349,56 +343,16 @@ def create_caption_video(arrayWithCaptions):
     print("No: ", cap.get(cv2.CAP_PROP_FRAME_COUNT))
     length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     numberOfFramePerCaption = math.ceil(length / len(arrayWithCaptions))
+    print("numberOfFramePerCaption: ", numberOfFramePerCaption)
     # Get video metadata
     video_fps = cap.get(cv2.CAP_PROP_FPS),
-    height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT) # 480.0
-    width = cap.get(cv2.CAP_PROP_FRAME_WIDTH) # 640.0
+    height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # 480.0
+    width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)  # 640.0
 
     # we are using avc1 codec for mp4
     fourcc = cv2.VideoWriter_fourcc(*'avc1')
     writer = cv2.VideoWriter('./video/output/' + f'{fileName}' + '_caption.mp4', apiPreference=0, fourcc=fourcc,
                              fps=video_fps[0], frameSize=(int(width), int(height + 100)))
-
-
-    # Import training video's annotations:
-
-    # Get list of directory names into an array list
-    annotations_directory_list = list()
-    for root, dirs, files in os.walk("./data/Annotation", topdown=False):
-        for name in dirs:
-            annotations_directory_list.append(os.path.join(root, name))
-
-    # print('directory name 3 letters: ' + annotations_directory_list[0][-3:]) # P02
-    # print('filename in captions area ' + fileName) # P02T05C05
-
-    # Strip away characters to leave only the file name
-    edited_annotations_directory_list = list()
-    for dir in annotations_directory_list:
-        strip = "./data/Annotation\\"
-        edited_annotations_directory_list.append(dir.lstrip(strip)) # ['P02', 'P03', 'P04', 'XYZ'...]
-
-    # Route to directory based on video file name
-    # print('fileName[:3] ' + fileName[:3]) # P02
-
-    # Extract all the data from csv's column into lists
-    events = list()
-    start_frames = list()
-    end_frames = list()
-
-    for dir in edited_annotations_directory_list:
-        # print('edited_annotations_directory_list dir: ', dir)
-        if fileName[:3] in edited_annotations_directory_list:
-            # csv_annotations = pd.read_csv(open("./data/Annotation/" + dir + '/' + str(fileName + '.csv')"))
-            # print(csv_annotations)
-
-            with open("./data/Annotation/" + dir + '/' + str(fileName + '.csv'), 'r') as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    events.append(row.get('event'))
-                    start_frames.append(row.get('start_frame'))
-                    end_frames.append(row.get('end_frame'))
-
-        break
 
     # print(str(events))
     # ['Watch_TV', 'Read', 'Watch_TV', 'Read', 'Watch_TV', 'Read', 'Watch_TV', 'Read', 'Watch_TV', 'Read', 'Watch_TV', 'Read', 'Watch_TV', 'Read', 'Watch_TV', 'Read', 'Watch_TV', 'Read']
@@ -409,9 +363,12 @@ def create_caption_video(arrayWithCaptions):
 
     # Progress bar
     pbar = tqdm(total=length)
+    # Initialise variable
     i = 0  # frame counter
     counter = 0  # counter for arrayWithCaptions
-    index = 0 # Pointer to indicate which event begins and ends in the start frames and end frames
+    index = 0  # Pointer to indicate which event begins and ends in the start frames and end frames
+    events = readCSV()
+    current_position_annotation = 0
 
     while True:
         # Capture frames in the video
@@ -419,7 +376,7 @@ def create_caption_video(arrayWithCaptions):
         # describe the type of font to be used.
 
         # Add white background for video inference captions
-        image = cv2.copyMakeBorder(frame, 0, 100, 0, 0, cv2.BORDER_CONSTANT, None, value = (255,255,255))
+        image = cv2.copyMakeBorder(frame, 0, 100, 0, 0, cv2.BORDER_CONSTANT, None, value=(255, 255, 255))
 
         font = cv2.FONT_HERSHEY_SIMPLEX
         # Use putText() method for
@@ -446,43 +403,29 @@ def create_caption_video(arrayWithCaptions):
 
         cv2.putText(image,
                     "Frame Num:",
-                    (400, int(height + 50)),
+                    (500, int(height + 50)),
                     font, 0.5,
                     (0, 0, 0),
                     2,
                     cv2.LINE_4)
 
-        # Frame number
+        # Frame number - Do we really need this?
         cv2.putText(image,
                     str(i),
-                    (400, int(height + 70)),
+                    (500, int(height + 70)),
                     font, 0.5,
                     (0, 0, 0),
                     2,
                     cv2.LINE_4)
 
-        # Show inference model ground truth for comparisons
-        if i > int(end_frames[index]):
-            index += 1
-
-        if i >= int(start_frames[index]) and i <= int(end_frames[index]):
-            cv2.putText(image,
-                        events[index],
-                        (200, int(height + 70)),
-                        font, 0.5,
-                        (0, 0, 0),
-                        2,
-                        cv2.LINE_4)
-
         caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1], 2))
-
-
         try:
             if i % numberOfFramePerCaption == 0:
-                counter += 1
-                caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1], 2))
-        except IndexError:
-            break
+                if counter < len(arrayWithCaptions) - 1:
+                    counter += 1
+                    caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1], 2))
+        except ZeroDivisionError:
+            print("Please ensure the video file is in the data folder!")
 
         # overlay captions on the frame with background (image)
         cv2.putText(image,
@@ -492,6 +435,34 @@ def create_caption_video(arrayWithCaptions):
                     (0, 0, 0),
                     2,
                     cv2.LINE_4)
+        # Overlay ground truth captions (current event provided by the annotation csv file)
+        if int(events[current_position_annotation][1]) <= i <= int(
+                events[current_position_annotation][2]):
+            event = events[current_position_annotation][0]
+            cv2.putText(image,
+                        event,
+                        (200, int(height + 70)),
+                        font, 0.5,
+                        (0, 0, 0),
+                        2,
+                        cv2.LINE_4)
+            # Handling if there are multiple events in the same frame
+            if current_position_annotation < len(events) - 1:
+                if int(events[current_position_annotation + 1][1]) <= i <= int(
+                        events[current_position_annotation + 1][2]):
+                    event2 = events[current_position_annotation + 1][0]
+                    cv2.putText(image,
+                                event2,
+                                (200, int(height + 85)),
+                                font, 0.5,
+                                (0, 0, 0),
+                                2,
+                                cv2.LINE_4)
+
+        # If frame is more than or equal to  end frame of the event, move to the next event and it is not the last event
+        if i >= int(events[current_position_annotation][2]) and current_position_annotation < len(events) - 1:
+            # Go to next event
+            current_position_annotation += 1
 
         # Show the progress bar
         pbar.set_description(f"Generating video:.... {i}")
@@ -521,6 +492,41 @@ def create_caption_video(arrayWithCaptions):
     cv2.destroyAllWindows()
 
     print('Video Inference Processing complete!')
+
+
+def readCSV():
+    # Import training video's annotations:
+    data = []
+    # Get list of directory names into an array list
+    annotations_directory_list = list()
+    for root, dirs, files in os.walk("./data/Annotation", topdown=False):
+        for name in dirs:
+            annotations_directory_list.append(os.path.join(root, name))
+
+    # print('directory name 3 letters: ' + annotations_directory_list[0][-3:]) # P02
+    # print('filename in captions area ' + fileName) # P02T05C05
+
+    # Strip away characters to leave only the file name
+    edited_annotations_directory_list = list()
+    for dir in annotations_directory_list:
+        strip = "./data/Annotation\\"
+        edited_annotations_directory_list.append(dir.lstrip(strip))  # ['P02', 'P03', 'P04', 'XYZ'...]
+
+    # Route to directory based on video file name
+    # print('fileName[:3] ' + fileName[:3]) # P02
+
+    for dir in edited_annotations_directory_list:
+        # print('edited_annotations_directory_list dir: ', dir)
+        # The first character matches  the file, then file the csv file in the folder
+        if dir == fileName[:3]:
+            with open("./data/Annotation/" + dir + '/' + str(fileName + '.csv'), 'r') as f:
+                reader = csv.reader(f)
+                data = list(reader)
+                # Remove header
+                data.pop(0)
+                # print(data)
+            break
+    return data
 
 
 if __name__ == '__main__':
