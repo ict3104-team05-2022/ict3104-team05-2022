@@ -56,6 +56,8 @@ import torch.optim as optim
 import numpy as np
 import random
 import cv2
+import pandas as pd
+
 
 # set random seed
 if args.randomseed == "False":
@@ -328,7 +330,51 @@ def val_step(model, gpu, dataloader, epoch):
 
     val_map = torch.sum(100 * apm.value()) / torch.nonzero(100 * apm.value()).size()[0]
     print('val-map:', val_map)
-    print(100 * apm.value())
+
+    apm_values_array = 100 * apm.value()
+    print(apm_values_array)
+    # print(100 * apm.value())
+    # tensor([43.9296, 50.4119, 45.0844, 45.3014, 40.5055, 43.5343, 33.3114, 30.4521,
+    #         40.9460, 20.7510, 17.2716,  5.1264,  0.7856, 38.4160, 37.8608,  3.3669,
+    #         22.8392, 56.7582,  2.8444, 72.0715, 33.0098, 52.9259, 52.4670,  3.2723,
+    #          1.6550, 63.7364, 37.0699, 52.0327, 60.0214, 15.2961,  6.6451,  0.8588,
+    #         39.0778,  2.8659, 48.3819, 89.2970, 37.7782, 15.1304, 23.2170,  8.0989,
+    #         70.3756, 32.7410, 17.4085, 64.6966,  2.0250, 76.3004, 65.2976, 32.5429,
+    #         11.6490,  2.2110,  0.6536])
+
+    # print(type(apm_values_array)) # <class 'torch.Tensor'>
+
+    # Creating Activity Based Accuracy (Total) CSV file
+    # Column names: Activity Name - Based on activity list | Average Class Prediction - Tensor
+
+    # Creating the DataFrame
+    # Get into integers for percentages
+    apm_values_array = np.ceil(apm_values_array)
+    df = pd.DataFrame({'Activity Name':activityList,
+                       'Average Class Prediction':(apm_values_array.numpy())})
+
+    # save to csv file
+    df.to_csv("Activity_Based_Accuracy_(Total).csv", index=False)
+
+    filename = 'Activity_Based_Accuracy_(Total).csv'
+    title = ['Activity Based Accuracy (Total)']
+
+    # Add in title Activity Based Accuracy (Total)
+    with open(filename, 'r') as readFile:
+        rd = csv.reader(readFile)
+        lines = list(rd)
+        lines.insert(0, title)
+
+    with open(filename, 'w',newline='') as writeFile:
+        wt = csv.writer(writeFile)
+        wt.writerows(lines)
+
+    readFile.close()
+    writeFile.close()
+
+    df = pd.read_csv("Activity_Based_Accuracy_(Total).csv")
+    # print(df)
+
     apm.reset()
 
     return full_probs, epoch_loss, val_map
@@ -435,6 +481,7 @@ def create_caption_video(arrayWithCaptions):
                     (0, 0, 0),
                     2,
                     cv2.LINE_4)
+
         # Overlay ground truth captions (current event provided by the annotation csv file)
         if int(events[current_position_annotation][1]) <= i <= int(
                 events[current_position_annotation][2]):
@@ -446,6 +493,7 @@ def create_caption_video(arrayWithCaptions):
                         (0, 0, 0),
                         2,
                         cv2.LINE_4)
+
             # Handling if there are multiple events in the same frame
             if current_position_annotation < len(events) - 1:
                 if int(events[current_position_annotation + 1][1]) <= i <= int(
