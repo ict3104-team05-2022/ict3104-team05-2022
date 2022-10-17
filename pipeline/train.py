@@ -41,7 +41,7 @@ parser.add_argument('-batch_size', type=str, default='False')
 parser.add_argument('-kernelsize', type=str, default='False')
 parser.add_argument('-feat', type=str, default='False')
 parser.add_argument('-split_setting', type=str, default='CS')
-parser.add_argument('-input_folder', type=str, default='./data/i3d')
+parser.add_argument('-input_folder', type=str, default='./data/I3D')
 args = parser.parse_args()
 
 # Import neccessary libraries
@@ -97,7 +97,7 @@ if args.dataset == 'TSU':
     classes = 51
 
     if split_setting == 'CS':
-        train_split = './data/smarthome_CS_51.json'
+        train_split = './data/smarthome_CS_51_v2.json'
         test_split = './data/smarthome_CS_51.json'
 
     elif split_setting == 'CV':
@@ -194,7 +194,7 @@ def run(models, criterion, num_epochs=50):
                         #      './results/' + str(args.model) + '/weight_epoch_' + str(args.lr) + '_' + str(epoch))
 
     # Save the best model
-    torch.save(best_model, './models/PDAN_TSU_RGB')
+    torch.save(best_model, './models/PDAN_TSU_RGB_Train')
 
 
 # Eval the model
@@ -231,7 +231,7 @@ def run_network(model, data, gpu, epoch=0, baseline=False):
 
     if args.model == "PDAN_TSU_RGB":
         # print('outputs_final1', outputs_final.size())
-        outputs_final = outputs_final[:, 0, :, :]
+        outputs_final = outputs_final[0, :, :, :]
     # print('outputs_final',outputs_final.size())
     outputs_final = outputs_final.permute(0, 2, 1)
     probs_f = F.sigmoid(outputs_final) * mask.unsqueeze(2)

@@ -138,3 +138,4 @@ NVIDIA-STEP-MODEL/STEP/pretrained/ava_step.pth
 pipeline/results/PDAN_TSU_RGB/
 
 *.csv
+*.jpg
