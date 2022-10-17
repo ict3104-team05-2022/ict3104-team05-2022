@@ -68,7 +68,7 @@ torch.cuda.manual_seed_all(SEED)
 random.seed(SEED)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
-print('Random_SEED!!!:', SEED)
+# print('Random_SEED!!!:', SEED)
 
 from torch.optim import lr_scheduler
 from torch.autograd import Variable
@@ -78,8 +78,8 @@ import json
 import pickle
 import math
 
-from tqdm.auto import trange
-from tqdm.auto import tqdm
+from tqdm.notebook import trange
+from tqdm.notebook import tqdm
 from time import sleep
 
 if str(args.APtype) == 'map':
@@ -98,7 +98,7 @@ if args.dataset == 'TSU':
 
     if split_setting == 'CS':
         train_split = './data/smarthome_CS_51_v2.json'
-        test_split = './data/smarthome_CS_51.json'
+        test_split = './data/smarthome_CS_51_v2.json'
 
     elif split_setting == 'CV':
         train_split = './data/smarthome_CV_51.json'
@@ -166,10 +166,9 @@ def run(models, criterion, num_epochs=50):
     #for epoch in range(num_epochs):
         #print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         #print('-' * 10)
-
             probs = []
             for model, gpu, dataloader, optimizer, sched, model_file in models:
-                with tqdm(dataloader['train'], unit="batch") as tepoch:
+                with tqdm(dataloader['train'], unit="batch", leave=False) as tepoch:
                     tepoch.set_description('Epoch {}/{} train'.format(epoch, num_epochs - 1))
                     train_map, train_loss = train_step(model, gpu, optimizer, tepoch, epoch)
 
@@ -231,7 +230,7 @@ def run_network(model, data, gpu, epoch=0, baseline=False):
 
     if args.model == "PDAN_TSU_RGB":
         # print('outputs_final1', outputs_final.size())
-        outputs_final = outputs_final[0, :, :, :]
+        outputs_final = outputs_final[:, 0, :, :]
     # print('outputs_final',outputs_final.size())
     outputs_final = outputs_final.permute(0, 2, 1)
     probs_f = F.sigmoid(outputs_final) * mask.unsqueeze(2)
@@ -312,7 +311,7 @@ def val_step(model, gpu, dataloader, epoch):
     epoch_loss = tot_loss / num_iter
 
     val_map = torch.sum(100 * apm.value()) / torch.nonzero(100 * apm.value()).size()[0]
-    #print('val-map:', val_map)
+    # print('Training accuracy:', val_map)
     #print(100 * apm.value())
     apm.reset()
 
