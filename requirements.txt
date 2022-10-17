@@ -9,5 +9,3 @@ ninja==1.10.2.3
 cuda-python==11.7.1
 pickle5; sys_platform=="linux"
 tqdm
-pandas
-os-sys

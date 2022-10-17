@@ -1,7 +1,7 @@
 from omegaconf import OmegaConf
 from tqdm import tqdm
 
-from utils.utils import build_cfg_path, form_list_from_user_input, sanity_check
+from utils2.utils import build_cfg_path, form_list_from_user_input, sanity_check
 
 
 def main(args_cli):
@@ -19,21 +19,21 @@ def main(args_cli):
 
     # import are done here to avoid import errors (we have two conda environements)
     if args.feature_type == 'i3d':
-        from models.i3d.extract_i3d import ExtractI3D as Extractor
+        from models2.i3d.extract_i3d import ExtractI3D as Extractor
     elif args.feature_type == 'r21d':
-        from models.r21d.extract_r21d import ExtractR21D as Extractor
+        from models2.r21d.extract_r21d import ExtractR21D as Extractor
     elif args.feature_type == 's3d':
-        from models.s3d.extract_s3d import ExtractS3D as Extractor
+        from models2.s3d.extract_s3d import ExtractS3D as Extractor
     elif args.feature_type == 'vggish':
-        from models.vggish.extract_vggish import ExtractVGGish as Extractor
+        from models2.vggish.extract_vggish import ExtractVGGish as Extractor
     elif args.feature_type == 'resnet':
-        from models.resnet.extract_resnet import ExtractResNet as Extractor
+        from models2.resnet.extract_resnet import ExtractResNet as Extractor
     elif args.feature_type == 'raft':
-        from models.raft.extract_raft import ExtractRAFT as Extractor
+        from models2.raft.extract_raft import ExtractRAFT as Extractor
     elif args.feature_type == 'pwc':
-        from models.pwc.extract_pwc import ExtractPWC as Extractor
+        from models2.pwc.extract_pwc import ExtractPWC as Extractor
     elif args.feature_type == 'clip':
-        from models.clip.extract_clip import ExtractCLIP as Extractor
+        from models2.clip.extract_clip import ExtractCLIP as Extractor
     else:
         raise NotImplementedError(f'Extractor {args.feature_type} is not implemented.')
 
