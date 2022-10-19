@@ -11,3 +11,4 @@ pickle5; sys_platform=="linux"
 tqdm
 pandas
 pydirectory
+omegaconf

@@ -230,7 +230,8 @@ def run_network(model, data, gpu, epoch=0, baseline=False):
 
     if args.model == "PDAN_TSU_RGB":
         # print('outputs_final1', outputs_final.size())
-        outputs_final = outputs_final[:, 0, :, :]
+        outputs_final = outputs_final[:, 0, :, :] # Original
+        # outputs_final = outputs_final[0, :, :, :] # Modified
     # print('outputs_final',outputs_final.size())
     outputs_final = outputs_final.permute(0, 2, 1)
     probs_f = F.sigmoid(outputs_final) * mask.unsqueeze(2)
