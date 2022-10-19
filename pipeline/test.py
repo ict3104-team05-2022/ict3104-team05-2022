@@ -44,8 +44,8 @@ parser.add_argument('-batch_size', type=str, default='2')  # change default from
 parser.add_argument('-kernelsize', type=str, default='3')  # change default from "False" to "3"
 parser.add_argument('-feat', type=str, default='False')
 parser.add_argument('-split_setting', type=str, default='CS')
-parser.add_argument('-input_video_file', type=str, default='P02T04C05', help='input video file name')
-parser.add_argument('-video_path', type=str, default='../data/P02T04C05.mp4', help='input video file path')
+parser.add_argument('-input_video_file', type=str, default='P02T05C05.mp4', help='input video file name')
+parser.add_argument('-video_path', type=str, default='../data/P02T05C05.mp4', help='input video file path')
 parser.add_argument('-test', type=str2bool, default='False', help='train or eval')
 args, unknown = parser.parse_known_args()
 
@@ -638,6 +638,7 @@ if __name__ == '__main__':
     print('cuda_avail', torch.cuda.is_available())
     # fileName = input("Type file name: ")
     fileName = args.input_video_file
+    print('fileName: ', fileName)
     # Remove .mp4 from fileName
     fileName = fileName[:-4]
     print("File name: ", fileName)
