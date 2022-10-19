@@ -63,8 +63,7 @@ def main(args_cli):
         # print(f'RGB Dict {rgb_dict}')
         data = np.expand_dims(rgb[1], axis=(2, 1)) # Reshape the data to fit into the TSU model
         # print(f'Data {data}')
-        np.save("../pipeline/data/v_iashin_i3d/" + video_file_name + ".npy", data)
-
+        np.save("./output/RGB_TEST/" + video_file_name + ".npy", data)
 
 if __name__ == '__main__':
     args_cli = OmegaConf.from_cli()
