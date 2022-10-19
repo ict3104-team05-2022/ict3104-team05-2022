@@ -44,8 +44,8 @@ parser.add_argument('-batch_size', type=str, default='2')  # change default from
 parser.add_argument('-kernelsize', type=str, default='3')  # change default from "False" to "3"
 parser.add_argument('-feat', type=str, default='False')
 parser.add_argument('-split_setting', type=str, default='CS')
-parser.add_argument('-input_video_file', type=str, default='P02T05C05.mp4', help='input video file name')
-parser.add_argument('-video_path', type=str, default='../data/P02T05C05.mp4', help='input video file path')
+parser.add_argument('-input_video_file', type=str, default='P02T03C03.mp4', help='input video file name')
+parser.add_argument('-video_path', type=str, default='../data/video/P02T03C03.mp4', help='input video file path')
 parser.add_argument('-test', type=str2bool, default='False', help='train or eval')
 args, unknown = parser.parse_known_args()
 
@@ -460,7 +460,6 @@ def create_caption_video(arrayWithCaptions):
                 if counter < len(arrayWithCaptions) - 1:
                     counter += 1
                     caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1], 2)) # Watch_TV 0.01
-
                     caption_name = str(arrayWithCaptions[counter][0]) # e.g. Watch_TV
                     caption_value = str(round(arrayWithCaptions[counter][1], 2)) # e.g. 0.01
 
@@ -637,7 +636,7 @@ if __name__ == '__main__':
     print('cuda_avail', torch.cuda.is_available())
     # fileName = input("Type file name: ")
     fileName = args.input_video_file
-    print('fileName: ', fileName)
+    # print('fileName: ', fileName)
     # Remove .mp4 from fileName
     fileName = fileName[:-4]
     print("File name: ", fileName)
