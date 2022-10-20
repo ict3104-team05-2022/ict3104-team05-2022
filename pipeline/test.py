@@ -44,8 +44,8 @@ parser.add_argument('-batch_size', type=str, default='2')  # change default from
 parser.add_argument('-kernelsize', type=str, default='3')  # change default from "False" to "3"
 parser.add_argument('-feat', type=str, default='False')
 parser.add_argument('-split_setting', type=str, default='CS')
-parser.add_argument('-input_video_file', type=str, default='P02T04C05', help='input video file name')
-parser.add_argument('-video_path', type=str, default='../data/P02T04C05.mp4', help='input video file path')
+parser.add_argument('-input_video_file', type=str, default='P02T03C03.mp4', help='input video file name')
+parser.add_argument('-video_path', type=str, default='../data/video/P02T03C03.mp4', help='input video file path')
 parser.add_argument('-test', type=str2bool, default='False', help='train or eval')
 args, unknown = parser.parse_known_args()
 
@@ -147,7 +147,6 @@ activityList = ["Enter", "Walk", "Make_coffee", "Get_water", "Make_Coffee",
                 "Cook.Stir", "Cook.Use_oven", "Clean_dishes.Clean_with_water",
                 "Use_tablet", "Use_glasses", "Pour.From_can"]
 
-
 # self-declared (essentially works same as run() method)
 def val_file(models, num_epochs=50):
     probs = []
@@ -156,6 +155,7 @@ def val_file(models, num_epochs=50):
         probs.append(prob_val)
         sched.step(val_loss)
         arrayForMaxAndIndex = []
+
         try:
             for index in range(len(prob_val.get(fileName)[1])):
                 # get the highest prob class at each frame from 51 activity.
@@ -419,7 +419,7 @@ def create_caption_video(arrayWithCaptions):
         # inserting text on video
         cv2.putText(image,
                     "Ground Truth:",
-                    (200, int(height + 50)),
+                    (350, int(height + 50)),
                     font, 0.5,
                     (0, 0, 0),
                     2,
@@ -437,22 +437,22 @@ def create_caption_video(arrayWithCaptions):
                     2,
                     cv2.LINE_4)
 
-        cv2.putText(image,
-                    "Frame Num:",
-                    (500, int(height + 50)),
-                    font, 0.5,
-                    (0, 0, 0),
-                    2,
-                    cv2.LINE_4)
+        # cv2.putText(image,
+        #             "Frame Num:",
+        #             (600, int(height + 50)),
+        #             font, 0.5,
+        #             (0, 0, 0),
+        #             2,
+        #             cv2.LINE_4)
 
-        # Frame number - Do we really need this?
-        cv2.putText(image,
-                    str(i),
-                    (500, int(height + 70)),
-                    font, 0.5,
-                    (0, 0, 0),
-                    2,
-                    cv2.LINE_4)
+        # Frame number
+        # cv2.putText(image,
+        #             str(i),
+        #             (600, int(height + 70)),
+        #             font, 0.5,
+        #             (0, 0, 0),
+        #             2,
+        #             cv2.LINE_4)
 
         caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1], 2))
         try:
@@ -460,7 +460,6 @@ def create_caption_video(arrayWithCaptions):
                 if counter < len(arrayWithCaptions) - 1:
                     counter += 1
                     caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1], 2)) # Watch_TV 0.01
-
                     caption_name = str(arrayWithCaptions[counter][0]) # e.g. Watch_TV
                     caption_value = str(round(arrayWithCaptions[counter][1], 2)) # e.g. 0.01
 
@@ -482,7 +481,7 @@ def create_caption_video(arrayWithCaptions):
             event = events[current_position_annotation][0]
             cv2.putText(image,
                         event,
-                        (200, int(height + 70)),
+                        (350, int(height + 70)),
                         font, 0.5,
                         (0, 0, 0),
                         2,
@@ -502,7 +501,7 @@ def create_caption_video(arrayWithCaptions):
                     event2 = events[current_position_annotation + 1][0]
                     cv2.putText(image,
                                 event2,
-                                (200, int(height + 85)),
+                                (350, int(height + 85)),
                                 font, 0.5,
                                 (0, 0, 0),
                                 2,
@@ -562,7 +561,6 @@ def create_caption_video(arrayWithCaptions):
     #           'Prediction Accuracy for the video':prediction_accuracy_array}
 
     # TODO: Convert prediction accuracy values into integers
-
     csv_data = {'Event':predicted_events_array,
          'Start_Frame':prediction_start_frames_array,
          'Prediction Accuracy for the video':prediction_accuracy_array}
@@ -638,6 +636,7 @@ if __name__ == '__main__':
     print('cuda_avail', torch.cuda.is_available())
     # fileName = input("Type file name: ")
     fileName = args.input_video_file
+    # print('fileName: ', fileName)
     # Remove .mp4 from fileName
     fileName = fileName[:-4]
     print("File name: ", fileName)
