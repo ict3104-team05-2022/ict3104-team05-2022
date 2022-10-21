@@ -168,7 +168,7 @@ def run(models, criterion, num_epochs=50):
         #print('-' * 10)
             probs = []
             for model, gpu, dataloader, optimizer, sched, model_file in models:
-                with tqdm(dataloader['train'], unit="batch", leave=False) as tepoch:
+                with tqdm(dataloader['train'], unit="batch") as tepoch:
                     tepoch.set_description('Epoch {}/{} train'.format(epoch, num_epochs - 1))
                     train_map, train_loss = train_step(model, gpu, optimizer, tepoch, epoch)
 
