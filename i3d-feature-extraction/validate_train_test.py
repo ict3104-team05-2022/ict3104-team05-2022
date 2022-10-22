@@ -18,12 +18,15 @@ json_file.close()
 
 # lists all files in the RGB directory and saving it into extracted_videos list
 extracted_videos = []
-path = './output/RGB'
+# path = './output/RGB'
+path = '../pipeline/data/v_iashin_i3d'
 files = os.listdir(path)
+print(files)
 
 for f in files:
-    extracted_videos.append(f.split('_')[0])
+    extracted_videos.append(f.split('.')[0])
 
+print(f'Extracted Video: {extracted_videos}')
 # displays length of each video list
 print(f"current vids: {len(valid_videos)}")
 print(f"extracted vids: {len(extracted_videos)}")
@@ -42,5 +45,5 @@ with open('../pipeline/data/smarthome_CS_51_v2.json', "w") as outfile:
     json.dump(data, outfile)
 
 print(f"missing vids: {', '.join(missing_vids)}")
-print(f"\n{len(missing_vids)} vids removed from smarthome_CS_51.json")
+print(f"\n{len(missing_vids)} vids removed from smarthome_CS_51_v2.json")
 print(f"smarthome_CS_51_v2.json saved to ./pipeline/data/")

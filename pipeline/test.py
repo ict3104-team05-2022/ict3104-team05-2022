@@ -44,8 +44,8 @@ parser.add_argument('-batch_size', type=str, default='2')  # change default from
 parser.add_argument('-kernelsize', type=str, default='3')  # change default from "False" to "3"
 parser.add_argument('-feat', type=str, default='False')
 parser.add_argument('-split_setting', type=str, default='CS')
-parser.add_argument('-input_video_file', type=str, default='P02T04C05', help='input video file name')
-parser.add_argument('-video_path', type=str, default='../data/P02T04C05.mp4', help='input video file path')
+parser.add_argument('-input_video_file', type=str, default='P02T03C03.mp4', help='input video file name')
+parser.add_argument('-video_path', type=str, default='../data/video/P02T03C03.mp4', help='input video file path')
 parser.add_argument('-test', type=str2bool, default='False', help='train or eval')
 args, unknown = parser.parse_known_args()
 
@@ -56,6 +56,8 @@ import torch.optim as optim
 import numpy as np
 import random
 import cv2
+import pandas as pd
+
 
 # set random seed
 if args.randomseed == "False":
@@ -145,7 +147,6 @@ activityList = ["Enter", "Walk", "Make_coffee", "Get_water", "Make_Coffee",
                 "Cook.Stir", "Cook.Use_oven", "Clean_dishes.Clean_with_water",
                 "Use_tablet", "Use_glasses", "Pour.From_can"]
 
-
 # self-declared (essentially works same as run() method)
 def val_file(models, num_epochs=50):
     probs = []
@@ -154,6 +155,7 @@ def val_file(models, num_epochs=50):
         probs.append(prob_val)
         sched.step(val_loss)
         arrayForMaxAndIndex = []
+
         try:
             for index in range(len(prob_val.get(fileName)[1])):
                 # get the highest prob class at each frame from 51 activity.
@@ -328,7 +330,42 @@ def val_step(model, gpu, dataloader, epoch):
 
     val_map = torch.sum(100 * apm.value()) / torch.nonzero(100 * apm.value()).size()[0]
     print('val-map:', val_map)
-    print(100 * apm.value())
+
+    apm_values_array = 100 * apm.value()
+    print(apm_values_array)
+    # print(type(apm_values_array)) # <class 'torch.Tensor'>
+
+    # Creating Activity Based Accuracy (Total) CSV file
+    # Column names: Activity Name - Based on activity list | Average Class Prediction - Tensor
+
+    # Creating the DataFrame
+    # Get into integers for percentages
+    apm_values_array = np.ceil(apm_values_array)
+    df = pd.DataFrame({'Activity Name':activityList,
+                       'Average Class Prediction':(apm_values_array.numpy())})
+
+    # save to csv file
+    df.to_csv("Activity_Based_Accuracy_(Total).csv", index=False)
+
+    filename = 'Activity_Based_Accuracy_(Total).csv'
+    title = ['Activity Based Accuracy (Total)']
+
+    # Add in title Activity Based Accuracy (Total)
+    with open(filename, 'r') as readFile:
+        rd = csv.reader(readFile)
+        lines = list(rd)
+        lines.insert(0, title)
+
+    with open(filename, 'w',newline='') as writeFile:
+        wt = csv.writer(writeFile)
+        wt.writerows(lines)
+
+    readFile.close()
+    writeFile.close()
+
+    df = pd.read_csv("Activity_Based_Accuracy_(Total).csv")
+    # print(df)
+
     apm.reset()
 
     return full_probs, epoch_loss, val_map
@@ -354,12 +391,11 @@ def create_caption_video(arrayWithCaptions):
     writer = cv2.VideoWriter('./video/output/' + f'{fileName}' + '_caption.mp4', apiPreference=0, fourcc=fourcc,
                              fps=video_fps[0], frameSize=(int(width), int(height + 100)))
 
-    # print(str(events))
-    # ['Watch_TV', 'Read', 'Watch_TV', 'Read', 'Watch_TV', 'Read', 'Watch_TV', 'Read', 'Watch_TV', 'Read', 'Watch_TV', 'Read', 'Watch_TV', 'Read', 'Watch_TV', 'Read', 'Watch_TV', 'Read']
-    # print(str(start_frames))
-    # ['0', '1191', '1368', '1764', '2901', '6422', '8474', '9863', '11336', '12615', '15446', '15761', '16046', '16664', '18209', '18609', '21864', '22264']
-    # print(str(end_frames))
-    # ['1171', '1368', '1709', '2862', '6422', '8474', '9854', '11335', '12614', '15437', '15761', '16041', '16666', '18204', '18589', '21849', '22259', '22694']
+    predicted_events_array = list()
+    prediction_start_frames_array = list()
+    prediction_end_frames_array = list()
+    video_names_array = list()
+    prediction_accuracy_array = list()
 
     # Progress bar
     pbar = tqdm(total=length)
@@ -383,7 +419,7 @@ def create_caption_video(arrayWithCaptions):
         # inserting text on video
         cv2.putText(image,
                     "Ground Truth:",
-                    (200, int(height + 50)),
+                    (350, int(height + 50)),
                     font, 0.5,
                     (0, 0, 0),
                     2,
@@ -401,29 +437,32 @@ def create_caption_video(arrayWithCaptions):
                     2,
                     cv2.LINE_4)
 
-        cv2.putText(image,
-                    "Frame Num:",
-                    (500, int(height + 50)),
-                    font, 0.5,
-                    (0, 0, 0),
-                    2,
-                    cv2.LINE_4)
+        # cv2.putText(image,
+        #             "Frame Num:",
+        #             (600, int(height + 50)),
+        #             font, 0.5,
+        #             (0, 0, 0),
+        #             2,
+        #             cv2.LINE_4)
 
-        # Frame number - Do we really need this?
-        cv2.putText(image,
-                    str(i),
-                    (500, int(height + 70)),
-                    font, 0.5,
-                    (0, 0, 0),
-                    2,
-                    cv2.LINE_4)
+        # Frame number
+        # cv2.putText(image,
+        #             str(i),
+        #             (600, int(height + 70)),
+        #             font, 0.5,
+        #             (0, 0, 0),
+        #             2,
+        #             cv2.LINE_4)
 
         caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1], 2))
         try:
             if i % numberOfFramePerCaption == 0:
                 if counter < len(arrayWithCaptions) - 1:
                     counter += 1
-                    caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1], 2))
+                    caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1], 2)) # Watch_TV 0.01
+                    caption_name = str(arrayWithCaptions[counter][0]) # e.g. Watch_TV
+                    caption_value = str(round(arrayWithCaptions[counter][1], 2)) # e.g. 0.01
+
         except ZeroDivisionError:
             print("Please ensure the video file is in the data folder!")
 
@@ -435,17 +474,26 @@ def create_caption_video(arrayWithCaptions):
                     (0, 0, 0),
                     2,
                     cv2.LINE_4)
+
         # Overlay ground truth captions (current event provided by the annotation csv file)
         if int(events[current_position_annotation][1]) <= i <= int(
                 events[current_position_annotation][2]):
             event = events[current_position_annotation][0]
             cv2.putText(image,
                         event,
-                        (200, int(height + 70)),
+                        (350, int(height + 70)),
                         font, 0.5,
                         (0, 0, 0),
                         2,
                         cv2.LINE_4)
+
+            # Append event name into array
+            predicted_events_array.append(caption_name)
+            # Append frame number into array
+            prediction_start_frames_array.append(i)
+            # Append accuracy captions into array
+            prediction_accuracy_array.append(caption_value)
+
             # Handling if there are multiple events in the same frame
             if current_position_annotation < len(events) - 1:
                 if int(events[current_position_annotation + 1][1]) <= i <= int(
@@ -453,11 +501,18 @@ def create_caption_video(arrayWithCaptions):
                     event2 = events[current_position_annotation + 1][0]
                     cv2.putText(image,
                                 event2,
-                                (200, int(height + 85)),
+                                (350, int(height + 85)),
                                 font, 0.5,
                                 (0, 0, 0),
                                 2,
                                 cv2.LINE_4)
+
+                    # Append event name into array
+                    predicted_events_array.append(caption_name)
+                    # Append frame number into array
+                    prediction_start_frames_array.append(i)
+                    # Append accuracy captions into array
+                    prediction_accuracy_array.append(float(caption_value))
 
         # If frame is more than or equal to  end frame of the event, move to the next event and it is not the last event
         if i >= int(events[current_position_annotation][2]) and current_position_annotation < len(events) - 1:
@@ -490,6 +545,49 @@ def create_caption_video(arrayWithCaptions):
     cap.release()
     # close all windows
     cv2.destroyAllWindows()
+
+    # print(f'predicted_events_array {len(predicted_events_array)}\n'
+    #       f'prediction_start_frames_array {len(prediction_start_frames_array)}\n'
+    #       f'prediction_end_frames_array {len(prediction_end_frames_array)}\n'
+    #       f'video_names_array {len(video_names_array)}\n'
+    #       f'prediction_accuracy_array {len(prediction_accuracy_array)}')
+
+    # Prepare Pandas dataframe for CSV output
+    # TODO: Tabulate proper start and end frames and add in corresponding video names
+    # a = {'Event':predicted_events_array,
+    #           'Start_Frame':prediction_start_frames_array,
+    #           'End_Frame':prediction_end_frames_array,
+    #           'Video_Name':video_names_array,
+    #           'Prediction Accuracy for the video':prediction_accuracy_array}
+
+    # TODO: Convert prediction accuracy values into integers
+    csv_data = {'Event':predicted_events_array,
+         'Start_Frame':prediction_start_frames_array,
+         'Prediction Accuracy for the video':prediction_accuracy_array}
+    df = pd.DataFrame.from_dict(csv_data, orient='columns')
+    df.transpose()
+
+    # save to csv file
+    df.to_csv("Activity_Based_Accuracy_(FbyF).csv", index=False)
+
+    filename = 'Activity_Based_Accuracy_(FbyF).csv'
+    title = ['Activity Based Accuracy (Frame by Frame)']
+
+    # Add in title Activity Based Accuracy (Total)
+    with open(filename, 'r') as readFile:
+        rd = csv.reader(readFile)
+        lines = list(rd)
+        lines.insert(0, title)
+
+    with open(filename, 'w',newline='') as writeFile:
+        wt = csv.writer(writeFile)
+        wt.writerows(lines)
+
+    readFile.close()
+    writeFile.close()
+
+    df = pd.read_csv("Activity_Based_Accuracy_(FbyF).csv")
+    # print(df)
 
     print('Video Inference Processing complete!')
 
@@ -538,6 +636,7 @@ if __name__ == '__main__':
     print('cuda_avail', torch.cuda.is_available())
     # fileName = input("Type file name: ")
     fileName = args.input_video_file
+    # print('fileName: ', fileName)
     # Remove .mp4 from fileName
     fileName = fileName[:-4]
     print("File name: ", fileName)

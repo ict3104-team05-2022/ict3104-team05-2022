@@ -3,11 +3,11 @@ from typing import Dict
 import numpy as np
 import torch
 import torchvision
-from models._base.base_extractor import BaseExtractor
-from models.transforms import (CenterCrop, Normalize, Resize,
+from models2._base.base_extractor import BaseExtractor
+from models2.transforms import (CenterCrop, Normalize, Resize,
                                ToFloatTensorInZeroOne)
 from torchvision.io.video import read_video
-from utils.utils import (form_slices, reencode_video_with_diff_fps,
+from utils2.utils import (form_slices, reencode_video_with_diff_fps,
                          show_predictions_on_dataset)
 
 
