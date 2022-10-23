@@ -58,7 +58,6 @@ import random
 import cv2
 import pandas as pd
 
-
 # set random seed
 if args.randomseed == "False":
     SEED = 0
@@ -146,6 +145,7 @@ activityList = ["Enter", "Walk", "Make_coffee", "Get_water", "Make_Coffee",
                 "Clean_dishes.Dry_up", "Wipe_table", "Cook", "Cook.Cut", "Cook.Use_stove",
                 "Cook.Stir", "Cook.Use_oven", "Clean_dishes.Clean_with_water",
                 "Use_tablet", "Use_glasses", "Pour.From_can"]
+
 
 # self-declared (essentially works same as run() method)
 def val_file(models, num_epochs=50):
@@ -341,8 +341,8 @@ def val_step(model, gpu, dataloader, epoch):
     # Creating the DataFrame
     # Get into integers for percentages
     apm_values_array = np.ceil(apm_values_array)
-    df = pd.DataFrame({'Activity Name':activityList,
-                       'Average Class Prediction':(apm_values_array.numpy())})
+    df = pd.DataFrame({'Activity Name': activityList,
+                       'Average Class Prediction': (apm_values_array.numpy())})
 
     # save to csv file
     df.to_csv("Activity_Based_Accuracy_(Total).csv", index=False)
@@ -356,7 +356,7 @@ def val_step(model, gpu, dataloader, epoch):
         lines = list(rd)
         lines.insert(0, title)
 
-    with open(filename, 'w',newline='') as writeFile:
+    with open(filename, 'w', newline='') as writeFile:
         wt = csv.writer(writeFile)
         wt.writerows(lines)
 
@@ -437,55 +437,44 @@ def create_caption_video(arrayWithCaptions):
                     2,
                     cv2.LINE_4)
 
-        # cv2.putText(image,
-        #             "Frame Num:",
-        #             (600, int(height + 50)),
-        #             font, 0.5,
-        #             (0, 0, 0),
-        #             2,
-        #             cv2.LINE_4)
-
-        # Frame number
-        # cv2.putText(image,
-        #             str(i),
-        #             (600, int(height + 70)),
-        #             font, 0.5,
-        #             (0, 0, 0),
-        #             2,
-        #             cv2.LINE_4)
-
         caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1], 2))
+
         try:
             if i % numberOfFramePerCaption == 0:
                 if counter < len(arrayWithCaptions) - 1:
                     counter += 1
-                    caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1], 2)) # Watch_TV 0.01
-                    caption_name = str(arrayWithCaptions[counter][0]) # e.g. Watch_TV
-                    caption_value = str(round(arrayWithCaptions[counter][1], 2)) # e.g. 0.01
+                    caption = arrayWithCaptions[counter][0] + " " + str(
+                        round(arrayWithCaptions[counter][1], 2))  # Watch_TV 0.01
+                    caption_name = str(arrayWithCaptions[counter][0])  # e.g. Watch_TV
+                    caption_value = str(round(arrayWithCaptions[counter][1], 2))  # e.g. 0.01
 
         except ZeroDivisionError:
             print("Please ensure the video file is in the data folder!")
 
-        # overlay captions on the frame with background (image)
-        cv2.putText(image,
-                    caption,
-                    (10, int(height + 70)),
-                    font, 0.5,
-                    (0, 0, 0),
-                    2,
-                    cv2.LINE_4)
-
+        event = ""
+        event2 = ""
         # Overlay ground truth captions (current event provided by the annotation csv file)
         if int(events[current_position_annotation][1]) <= i <= int(
                 events[current_position_annotation][2]):
-            event = events[current_position_annotation][0]
-            cv2.putText(image,
-                        event,
-                        (350, int(height + 70)),
-                        font, 0.5,
-                        (0, 0, 0),
-                        2,
-                        cv2.LINE_4)
+            event = events[current_position_annotation][0]  # First annotation event
+
+            # If caption is simmilar to event caption will be in green colour
+            if caption_name == event:
+                cv2.putText(image,
+                            event,
+                            (350, int(height + 70)),
+                            font, 0.5,
+                            (0, 255, 0),
+                            2,
+                            cv2.LINE_4)
+            else:
+                cv2.putText(image,
+                            event,
+                            (350, int(height + 70)),
+                            font, 0.5,
+                            (0, 0, 255),
+                            2,
+                            cv2.LINE_4)
 
             # Append event name into array
             predicted_events_array.append(caption_name)
@@ -498,21 +487,46 @@ def create_caption_video(arrayWithCaptions):
             if current_position_annotation < len(events) - 1:
                 if int(events[current_position_annotation + 1][1]) <= i <= int(
                         events[current_position_annotation + 1][2]):
-                    event2 = events[current_position_annotation + 1][0]
-                    cv2.putText(image,
-                                event2,
-                                (350, int(height + 85)),
-                                font, 0.5,
-                                (0, 0, 0),
-                                2,
-                                cv2.LINE_4)
-
+                    event2 = events[current_position_annotation + 1][0]  # Second annotation event
+                    if caption_name == event2:
+                        cv2.putText(image,
+                                    event2,
+                                    (350, int(height + 85)),
+                                    font, 0.5,
+                                    (0, 255, 0),
+                                    2,
+                                    cv2.LINE_4)
+                    else:
+                        cv2.putText(image,
+                                    event2,
+                                    (350, int(height + 85)),
+                                    font, 0.5,
+                                    (0, 0, 255),
+                                    2,
+                                    cv2.LINE_4)
                     # Append event name into array
                     predicted_events_array.append(caption_name)
                     # Append frame number into array
                     prediction_start_frames_array.append(i)
                     # Append accuracy captions into array
                     prediction_accuracy_array.append(float(caption_value))
+            if caption_name == event or caption_name == event2:
+                # overlay captions on the frame with background (image)
+                cv2.putText(image,
+                            caption,
+                            (10, int(height + 70)),
+                            font, 0.5,
+                            (0, 255, 0),
+                            2,
+                            cv2.LINE_4)
+            else:
+                cv2.putText(image,
+                            caption,
+                            (10, int(height + 70)),
+                            font, 0.5,
+                            (0, 0, 255),
+                            2,
+                            cv2.LINE_4)
 
         # If frame is more than or equal to  end frame of the event, move to the next event and it is not the last event
         if i >= int(events[current_position_annotation][2]) and current_position_annotation < len(events) - 1:
@@ -561,9 +575,9 @@ def create_caption_video(arrayWithCaptions):
     #           'Prediction Accuracy for the video':prediction_accuracy_array}
 
     # TODO: Convert prediction accuracy values into integers
-    csv_data = {'Event':predicted_events_array,
-         'Start_Frame':prediction_start_frames_array,
-         'Prediction Accuracy for the video':prediction_accuracy_array}
+    csv_data = {'Event': predicted_events_array,
+                'Start_Frame': prediction_start_frames_array,
+                'Prediction Accuracy for the video': prediction_accuracy_array}
     df = pd.DataFrame.from_dict(csv_data, orient='columns')
     df.transpose()
 
@@ -579,7 +593,7 @@ def create_caption_video(arrayWithCaptions):
         lines = list(rd)
         lines.insert(0, title)
 
-    with open(filename, 'w',newline='') as writeFile:
+    with open(filename, 'w', newline='') as writeFile:
         wt = csv.writer(writeFile)
         wt.writerows(lines)
 
