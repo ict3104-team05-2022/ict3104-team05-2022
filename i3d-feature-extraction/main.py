@@ -69,8 +69,8 @@ def main(args_cli):
         rgb_data = np.expand_dims(rgb[1], axis=(2, 1))
 
         rgb_dir = './output/RGB_TEST/'
-        fps_dir = './output/FPS'
-        timestamps_dir = './output/TIMESTAMPS'
+        fps_dir = './output/FPS/'
+        timestamps_dir = './output/TIMESTAMPS/'
 
         rgb_dir_exists = os.path.isdir(rgb_dir)
         fps_dir_exists = os.path.isdir(fps_dir)
@@ -82,9 +82,9 @@ def main(args_cli):
             if dir_exist[1] == False:
                 os.mkdir(dir_exist[0])
 
-        np.save("./output/RGB_TEST/" + video_file_name + "_rgb.npy", rgb_data)
-        np.save("./output/FPS/" + video_file_name + "_fps.npy", fps)
-        np.save("./output/TIMESTAMPS/" + video_file_name + "_timestamps_ms.npy", timestamp)
+        np.save(rgb_dir + video_file_name + "_rgb.npy", rgb_data)
+        np.save(fps_dir + video_file_name + "_fps.npy", fps)
+        np.save(timestamps_dir + video_file_name + "_timestamps_ms.npy", timestamp)
 
 
 if __name__ == '__main__':
