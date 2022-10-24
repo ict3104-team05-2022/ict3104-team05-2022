@@ -183,7 +183,7 @@ def run(models, criterion, num_epochs=50):
                         best_map = val_map
                         pbar.set_postfix({'loss':val_loss.item(),'best accuracy':best_map.item()})
                         best_model = model
-                        pickle.dump(prob_val, open('./results/' + str(epoch) + '.pkl', 'wb'), pickle.HIGHEST_PROTOCOL)
+                        pickle.dump(prob_val, open('./models/' + str(epoch) + '.pkl', 'wb'), pickle.HIGHEST_PROTOCOL)
                         # torch.save(model.state_dict(),
                         #            './results/' + str(args.model) + '/weight_epoch_' + str(args.lr) + '_' + str(epoch))
                         # torch.save(model, './results/' + str(args.model) + '/model_epoch_' + str(args.lr) + '_' + str(epoch))
