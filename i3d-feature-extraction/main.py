@@ -1,3 +1,6 @@
+import numpy as np
+import os
+
 from omegaconf import OmegaConf
 from tqdm import tqdm
 
@@ -52,39 +55,36 @@ def main(args_cli):
     print(f'The number of specified videos: {len(video_paths)}')
 
     for video_path in tqdm(video_paths):
-        extractor._extract(video_path)  # note the `_` in the method name
+        # Get the video file name from the video path
+        video_file_name = video_path.split('/')[-1]
+        video_file_name = video_file_name.split('.')[0]
 
-    # yep, it is this simple!
+        feature_dict = extractor.extract(video_path)
 
-    source_path = './output/RGB_TEST'
-    files = os.listdir(source_path)
+        rgb = list(feature_dict.items())[0]
+        fps = list(feature_dict.items())[1]
+        timestamp = list(feature_dict.items())[2]
 
-    for file in files:
-        filename = file[:-4]
-        filepath = os.path.join(source_path, file)
-        type = filename.split('_')[-1]
+        # Reshape the data to fit into the TSU model
+        rgb_data = np.expand_dims(rgb[1], axis=(2, 1))
 
-        timestamps_dir = './output/TIMESTAMPS'
+        rgb_dir = './output/RGB_TEST/'
         fps_dir = './output/FPS'
+        timestamps_dir = './output/TIMESTAMPS'
 
-        timestamps_dir_exists = os.path.isdir(timestamps_dir)
+        rgb_dir_exists = os.path.isdir(rgb_dir)
         fps_dir_exists = os.path.isdir(fps_dir)
+        timestamps_dir_exists = os.path.isdir(timestamps_dir)
 
-        if not timestamps_dir_exists:
-            os.mkdir(timestamps_dir)
+        all_dir_exist = [[rgb_dir, rgb_dir_exists], [fps_dir, fps_dir_exists], [timestamps_dir, timestamps_dir_exists]]
 
-        if not fps_dir_exists:
-            os.mkdir(fps_dir)
+        for dir_exist in all_dir_exist:
+            if dir_exist[1] == False:
+                os.mkdir(dir_exist[0])
 
-        if (type == "ms"):
-            shutil.copy(filepath, timestamps_dir)
-            os.remove(filepath)
-
-        elif (type == "fps"):
-            shutil.copy(filepath, fps_dir)
-            os.remove(filepath)
-
-    print("RGB .npy files have been organised.")
+        np.save("./output/RGB_TEST/" + video_file_name + "_rgb.npy", rgb_data)
+        np.save("./output/FPS/" + video_file_name + "_fps.npy", fps)
+        np.save("./output/TIMESTAMPS/" + video_file_name + "_timestamps_ms.npy", timestamp)
 
 
 if __name__ == '__main__':
