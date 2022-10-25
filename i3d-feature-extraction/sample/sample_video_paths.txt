@@ -1,3 +1,4 @@
 ../data/video/P02T02C06.mp4
 ../data/video/P02T03C03.mp4
 ../data/video/P02T03C07.mp4
+../data/video/P02T04C05.mp4

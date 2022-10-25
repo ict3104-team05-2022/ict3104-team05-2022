@@ -78,8 +78,8 @@ import json
 import pickle
 import math
 
-from tqdm.notebook import trange
-from tqdm.notebook import tqdm
+from tqdm.auto import trange
+from tqdm.auto import tqdm
 from time import sleep
 
 if str(args.APtype) == 'map':
@@ -107,6 +107,7 @@ if args.dataset == 'TSU':
     # Unknown ?
     rgb_root = args.input_folder
     skeleton_root = './data/Skeleton'
+    flow_root = './data/Flow'
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
@@ -168,7 +169,7 @@ def run(models, criterion, num_epochs=50):
         #print('-' * 10)
             probs = []
             for model, gpu, dataloader, optimizer, sched, model_file in models:
-                with tqdm(dataloader['train'], unit="batch", leave=False) as tepoch:
+                with tqdm(dataloader['train'], unit="batch") as tepoch:
                     tepoch.set_description('Epoch {}/{} train'.format(epoch, num_epochs - 1))
                     train_map, train_loss = train_step(model, gpu, optimizer, tepoch, epoch)
 
