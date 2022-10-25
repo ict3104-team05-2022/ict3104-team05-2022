@@ -6,6 +6,7 @@ import os
 import sys
 import time
 import warnings
+import wandb
 
 warnings.filterwarnings("ignore")
 from tqdm import tqdm
@@ -301,6 +302,12 @@ def train_step(model, gpu, optimizer, dataloader, epoch):
 
 
 def val_step(model, gpu, dataloader, epoch):
+    wandb.init(project="inference-visualisation",
+    config={
+        "batch_size": int(args.batch_size),
+        "learning_rate": float(args.lr),
+        "epochs": int(args.epoch),
+    })
     model.train(False)
     apm = APMeter()
     tot_loss = 0.0
@@ -323,6 +330,8 @@ def val_step(model, gpu, dataloader, epoch):
         tot_loss += loss.data
 
         probs = probs.squeeze()
+        
+        wandb.log({"error": err.data, "loss": loss.data})
 
         full_probs[other[0][0]] = probs.data.cpu().numpy().T
 
