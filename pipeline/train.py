@@ -106,7 +106,7 @@ if args.dataset == 'TSU':
         test_split = './data/smarthome_CV_51.json'
 
     # Unknown ?
-    rgb_root = './data/dataset/v_iashin_i3d'
+    rgb_root = args.input_folder
     skeleton_root = './data/Skeleton'
     flow_root = './data/Flow'
 
