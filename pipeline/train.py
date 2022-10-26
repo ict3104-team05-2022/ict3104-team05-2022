@@ -5,6 +5,7 @@ import argparse
 import sys
 import torch
 import wandb
+import pickle
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -42,7 +43,7 @@ parser.add_argument('-batch_size', type=str, default='False')
 parser.add_argument('-kernelsize', type=str, default='False')
 parser.add_argument('-feat', type=str, default='False')
 parser.add_argument('-split_setting', type=str, default='CS')
-parser.add_argument('-input_folder', type=str, default='./data/I3D')
+parser.add_argument('-input_folder', type=str, default='./data/dataset/v_iashin_i3d')
 args = parser.parse_args()
 
 # Import neccessary libraries
@@ -177,12 +178,12 @@ def run(models, criterion, num_epochs=50):
         #print('-' * 10)
             probs = []
             for model, gpu, dataloader, optimizer, sched, model_file in models:
-                with tqdm(dataloader['train'], unit="batch") as tepoch:
+                with tqdm(dataloader['train']) as tepoch:
                     tepoch.set_description('Epoch {}/{} train'.format(epoch, num_epochs - 1))
                     train_map, train_loss = train_step(model, gpu, optimizer, tepoch, epoch)
 
-                with tqdm(dataloader['val'], unit="batch") as tepoch:
-                    tepoch.set_description('Epoch {}/{} eval'.format(epoch, num_epochs - 1))
+                with tqdm(dataloader['val']) as tepoch:
+                    tepoch.set_description('Epoch {}/{} val'.format(epoch, num_epochs - 1))
                     prob_val, val_loss, val_map = val_step(model, gpu, tepoch, epoch)
                     probs.append(prob_val)
                     sched.step(val_loss)
@@ -194,16 +195,19 @@ def run(models, criterion, num_epochs=50):
                         pbar.set_postfix({'loss':val_loss.item(),'best accuracy':best_map.item()})
                         wandb.log({"best accuracy": best_map.item()})
                         best_model = model
-                        torch.save(model.state_dict(),
-                                   './results/' + str(args.model) + '/weight_epoch_' + str(args.lr) + '_' + str(epoch))
-                        torch.save(model, './results/' + str(args.model) + '/model_epoch_' + str(args.lr) + '_' + str(epoch))
+                        pickle.dump(prob_val, open('./models/' + str(epoch) + '.pkl', 'wb'), pickle.HIGHEST_PROTOCOL)
+                        # torch.save(model.state_dict(),
+                        #            './results/' + str(args.model) + '/weight_epoch_' + str(args.lr) + '_' + str(epoch))
+                        # torch.save(model, './results/' + str(args.model) + '/model_epoch_' + str(args.lr) + '_' + str(epoch))
                         #print('save here for model: ',
                         #      './results/' + str(args.model) + '/model_epoch_' + str(args.lr) + '_' + str(epoch))
                         #print('save here for weight:',
                         #      './results/' + str(args.model) + '/weight_epoch_' + str(args.lr) + '_' + str(epoch))
 
     # Save the best model
-    torch.save(best_model, './models/PDAN_TSU_RGB_Train')
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    torch.save(best_model, f'./models/PDAN_TSU_RGB_Train_{timestr}')
+    print(f"Trained model saved in ./models/PDAN_TSU_RGB_Train_{timestr}")
 
 
 # Eval the model
