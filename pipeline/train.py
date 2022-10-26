@@ -79,8 +79,8 @@ import json
 import pickle
 import math
 
-from tqdm.notebook import trange
-from tqdm.notebook import tqdm
+from tqdm.auto import trange
+from tqdm.auto import tqdm
 from time import sleep
 
 if str(args.APtype) == 'map':
@@ -108,6 +108,7 @@ if args.dataset == 'TSU':
     # Unknown ?
     rgb_root = './data/dataset/v_iashin_i3d'
     skeleton_root = './data/Skeleton'
+    flow_root = './data/Flow'
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
