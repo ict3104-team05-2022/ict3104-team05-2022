@@ -10,7 +10,7 @@ import wandb
 
 warnings.filterwarnings("ignore")
 from tqdm import tqdm
-
+os.environ["WANDB_SILENT"] = "True"
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -331,7 +331,7 @@ def val_step(model, gpu, dataloader, epoch):
 
         probs = probs.squeeze()
 
-        wandb.log({"error": err.data, "loss": loss.data})
+        wandb.log({"loss": loss.data})
 
         full_probs[other[0][0]] = probs.data.cpu().numpy().T
 

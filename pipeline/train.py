@@ -9,6 +9,7 @@ import pickle
 
 import warnings
 warnings.filterwarnings("ignore")
+os.environ["WANDB_SILENT"] = "True"
 
 # Convert input variable to true or false
 def str2bool(v):
