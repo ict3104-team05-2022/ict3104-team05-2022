@@ -343,6 +343,41 @@ def val_step(model, gpu, dataloader, epoch):
     apm_values_array = 100 * apm.value()
     print(apm_values_array)
     # print(type(apm_values_array)) # <class 'torch.Tensor'>
+    apm.reset()
+
+    # Creating 'Overall Accuracy (Testing)' CSV file
+    # Column names: Tested On | Test Epochs | Test m-AP | Test Loss
+
+    # TODO: Tested On refers to num of video, it has been tested on.
+    #  Hence 1 TSU Video unless the model will process multiple videos.
+
+    cleaned_val_map = (str(val_map))[7:-1] # Remove strings and brackets
+    cleaned_epoch_loss = (str(epoch_loss))[7:-18] # Remove strings and brackets
+
+    df = pd.DataFrame({'Tested On': '1 TSU Video',
+                       'Test Epochs': str(int(args.epoch)),
+                       'Prediction m-AP': cleaned_val_map,
+                       'Test Loss': cleaned_epoch_loss
+                       }, index=[0])
+
+    # save to csv file
+    df.to_csv("Overall_Accuracy_(Testing).csv", index=False)
+    filename = 'Overall_Accuracy_(Testing).csv'
+
+    # Add in title Overall Accuracy (Testing)
+    title = ['Overall Accuracy (Testing)']
+
+    with open(filename, 'r') as readFile:
+        rd = csv.reader(readFile)
+        lines = list(rd)
+        lines.insert(0, title)
+
+    with open(filename, 'w', newline='') as writeFile:
+        wt = csv.writer(writeFile)
+        wt.writerows(lines)
+
+    readFile.close()
+    writeFile.close()
 
     # Creating Activity Based Accuracy (Total) CSV file
     # Column names: Activity Name - Based on activity list | Average Class Prediction - Tensor
@@ -375,10 +410,7 @@ def val_step(model, gpu, dataloader, epoch):
     df = pd.read_csv("Activity_Based_Accuracy_(Total).csv")
     # print(df)
 
-    apm.reset()
-
     return full_probs, epoch_loss, val_map
-
 
 def create_caption_video(arrayWithCaptions):
     video = filePath
@@ -570,6 +602,7 @@ def create_caption_video(arrayWithCaptions):
     #           'Video_Name':video_names_array,
     #           'Prediction Accuracy for the video':prediction_accuracy_array}
 
+    # Creating Activity Based Accuracy (Frame by Frame) CSV file
     # TODO: Convert prediction accuracy values into integers
     csv_data = {'Event': predicted_events_array,
                 'Start_Frame': prediction_start_frames_array,
