@@ -10,7 +10,7 @@ import glob
 import random
 import pickle
 
-videodir = "<Path_to_AVA_dataset>"    # TODO: put the path to your AVA dataset here
+videodir = "./datasets/ava/input/"    # TODO: put the path to your AVA dataset here
 root = os.path.dirname(videodir)
 outdir_clips = os.path.join(root, "frames/")
 

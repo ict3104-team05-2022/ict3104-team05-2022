@@ -12,3 +12,4 @@ tqdm
 pandas
 pydirectory
 omegaconf
+python-dotenv
