@@ -478,23 +478,6 @@ def create_caption_video(arrayWithCaptions):
                     2,
                     cv2.LINE_4)
 
-        # cv2.putText(image,
-        #             "Frame Num:",
-        #             (600, int(height + 50)),
-        #             font, 0.5,
-        #             (0, 0, 0),
-        #             2,
-        #             cv2.LINE_4)
-
-        # Frame number
-        # cv2.putText(image,
-        #             str(i),
-        #             (600, int(height + 70)),
-        #             font, 0.5,
-        #             (0, 0, 0),
-        #             2,
-        #             cv2.LINE_4)
-
         caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1], 2))
         try:
             if i % numberOfFramePerCaption == 0:
