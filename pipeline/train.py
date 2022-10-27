@@ -4,10 +4,12 @@ import os
 import argparse
 import sys
 import torch
+import wandb
 import pickle
 
 import warnings
 warnings.filterwarnings("ignore")
+os.environ["WANDB_SILENT"] = "True"
 
 # Convert input variable to true or false
 def str2bool(v):
@@ -160,6 +162,13 @@ def load_data(train_split, val_split, root):
 
 # train the model
 def run(models, criterion, num_epochs=50):
+    wandb.init(project="training-visualisation",
+            config={
+                "batch_size": int(args.batch_size),
+                "learning_rate": float(args.lr),
+                "epochs": int(args.epoch),
+            })
+
     since = time.time()
     best_model = None
     best_map = 0.0
@@ -179,10 +188,13 @@ def run(models, criterion, num_epochs=50):
                     prob_val, val_loss, val_map = val_step(model, gpu, tepoch, epoch)
                     probs.append(prob_val)
                     sched.step(val_loss)
+                    
+                    wandb.log({"loss": val_loss.item(), "accuracy": val_map.item()})
 
                     if best_map < val_map:
                         best_map = val_map
                         pbar.set_postfix({'loss':val_loss.item(),'best accuracy':best_map.item()})
+                        wandb.log({"best accuracy": best_map.item()})
                         best_model = model
                         pickle.dump(prob_val, open('./models/' + str(epoch) + '.pkl', 'wb'), pickle.HIGHEST_PROTOCOL)
                         # torch.save(model.state_dict(),
@@ -373,3 +385,6 @@ if __name__ == '__main__':
         optimizer = optim.Adam(model.parameters(), lr=lr)
         lr_sched = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=8, verbose=True)
         run([(model, 0, dataloaders, optimizer, lr_sched, args.comp_info)], criterion, num_epochs=int(args.epoch))
+        
+        if wandb.run is not None:
+            wandb.finish()

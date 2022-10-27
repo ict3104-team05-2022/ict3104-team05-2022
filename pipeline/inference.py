@@ -6,10 +6,11 @@ import os
 import sys
 import time
 import warnings
+import wandb
 
 warnings.filterwarnings("ignore")
 from tqdm import tqdm
-
+os.environ["WANDB_SILENT"] = "True"
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -57,7 +58,6 @@ import numpy as np
 import random
 import cv2
 import pandas as pd
-
 
 # set random seed
 if args.randomseed == "False":
@@ -146,6 +146,7 @@ activityList = ["Enter", "Walk", "Make_coffee", "Get_water", "Make_Coffee",
                 "Clean_dishes.Dry_up", "Wipe_table", "Cook", "Cook.Cut", "Cook.Use_stove",
                 "Cook.Stir", "Cook.Use_oven", "Clean_dishes.Clean_with_water",
                 "Use_tablet", "Use_glasses", "Pour.From_can"]
+
 
 # self-declared (essentially works same as run() method)
 def val_file(models, num_epochs=50):
@@ -301,6 +302,12 @@ def train_step(model, gpu, optimizer, dataloader, epoch):
 
 
 def val_step(model, gpu, dataloader, epoch):
+    wandb.init(project="inference-visualisation",
+               config={
+                   "batch_size": int(args.batch_size),
+                   "learning_rate": float(args.lr),
+                   "epochs": int(args.epoch),
+               })
     model.train(False)
     apm = APMeter()
     tot_loss = 0.0
@@ -324,6 +331,8 @@ def val_step(model, gpu, dataloader, epoch):
 
         probs = probs.squeeze()
 
+        wandb.log({"loss": loss.data})
+
         full_probs[other[0][0]] = probs.data.cpu().numpy().T
 
     epoch_loss = tot_loss / num_iter
@@ -341,8 +350,8 @@ def val_step(model, gpu, dataloader, epoch):
     # Creating the DataFrame
     # Get into integers for percentages
     apm_values_array = np.ceil(apm_values_array)
-    df = pd.DataFrame({'Activity Name':activityList,
-                       'Average Class Prediction':(apm_values_array.numpy())})
+    df = pd.DataFrame({'Activity Name': activityList,
+                       'Average Class Prediction': (apm_values_array.numpy())})
 
     # save to csv file
     df.to_csv("Activity_Based_Accuracy_(Total).csv", index=False)
@@ -356,7 +365,7 @@ def val_step(model, gpu, dataloader, epoch):
         lines = list(rd)
         lines.insert(0, title)
 
-    with open(filename, 'w',newline='') as writeFile:
+    with open(filename, 'w', newline='') as writeFile:
         wt = csv.writer(writeFile)
         wt.writerows(lines)
 
@@ -459,9 +468,10 @@ def create_caption_video(arrayWithCaptions):
             if i % numberOfFramePerCaption == 0:
                 if counter < len(arrayWithCaptions) - 1:
                     counter += 1
-                    caption = arrayWithCaptions[counter][0] + " " + str(round(arrayWithCaptions[counter][1], 2)) # Watch_TV 0.01
-                    caption_name = str(arrayWithCaptions[counter][0]) # e.g. Watch_TV
-                    caption_value = str(round(arrayWithCaptions[counter][1], 2)) # e.g. 0.01
+                    caption = arrayWithCaptions[counter][0] + " " + str(
+                        round(arrayWithCaptions[counter][1], 2))  # Watch_TV 0.01
+                    caption_name = str(arrayWithCaptions[counter][0])  # e.g. Watch_TV
+                    caption_value = str(round(arrayWithCaptions[counter][1], 2))  # e.g. 0.01
 
         except ZeroDivisionError:
             print("Please ensure the video file is in the data folder!")
@@ -561,9 +571,9 @@ def create_caption_video(arrayWithCaptions):
     #           'Prediction Accuracy for the video':prediction_accuracy_array}
 
     # TODO: Convert prediction accuracy values into integers
-    csv_data = {'Event':predicted_events_array,
-         'Start_Frame':prediction_start_frames_array,
-         'Prediction Accuracy for the video':prediction_accuracy_array}
+    csv_data = {'Event': predicted_events_array,
+                'Start_Frame': prediction_start_frames_array,
+                'Prediction Accuracy for the video': prediction_accuracy_array}
     df = pd.DataFrame.from_dict(csv_data, orient='columns')
     df.transpose()
 
@@ -579,7 +589,7 @@ def create_caption_video(arrayWithCaptions):
         lines = list(rd)
         lines.insert(0, title)
 
-    with open(filename, 'w',newline='') as writeFile:
+    with open(filename, 'w', newline='') as writeFile:
         wt = csv.writer(writeFile)
         wt.writerows(lines)
 
