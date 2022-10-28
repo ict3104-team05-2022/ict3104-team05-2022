@@ -1,14 +1,21 @@
 import numpy as np
+import os
+
 from omegaconf import OmegaConf
 from tqdm import tqdm
 
 from utils2.utils import build_cfg_path, form_list_from_user_input, sanity_check
 
+import shutil
+import os
+import os.path
+
 
 def main(args_cli):
     # config
     args_yml = OmegaConf.load(build_cfg_path(args_cli.feature_type))
-    args = OmegaConf.merge(args_yml, args_cli)  # the latter arguments are prioritized
+    # the latter arguments are prioritized
+    args = OmegaConf.merge(args_yml, args_cli)
     # OmegaConf.set_readonly(args, True)
     sanity_check(args)
 
@@ -36,34 +43,49 @@ def main(args_cli):
     elif args.feature_type == 'clip':
         from models2.clip.extract_clip import ExtractCLIP as Extractor
     else:
-        raise NotImplementedError(f'Extractor {args.feature_type} is not implemented.')
+        raise NotImplementedError(
+            f'Extractor {args.feature_type} is not implemented.')
 
     extractor = Extractor(args)
 
     # unifies whatever a user specified as paths into a list of paths
-    video_paths = form_list_from_user_input(args.video_paths, args.file_with_video_paths, to_shuffle=True)
+    video_paths = form_list_from_user_input(
+        args.video_paths, args.file_with_video_paths, to_shuffle=True)
 
     print(f'The number of specified videos: {len(video_paths)}')
-    print(f"Extracting features from video....")
+    print(f'Output path: {args.output_path}')
 
     for video_path in tqdm(video_paths):
-        # print(f'Extracting for {video_path}')
         # Get the video file name from the video path
         video_file_name = video_path.split('/')[-1]
         video_file_name = video_file_name.split('.')[0]
-        # print(f'Video File Name {video_file_name}')
-        # extractor._extract(video_path) # note the `_` in the method name
+
         feature_dict = extractor.extract(video_path)
-        # print(f'Feature Dict for {feature_dict}')
+
         rgb = list(feature_dict.items())[0]
-        # print(f'RGB 0 {rgb[0]}')
-        # print(f'RGB 1 {rgb[1]}')
-        # Store it in dictionary
-        rgb_dict = {rgb[0]: rgb[1]}
-        # print(f'RGB Dict {rgb_dict}')
-        data = np.expand_dims(rgb[1], axis=(2, 1)) # Reshape the data to fit into the TSU model
-        # print(f'Data {data}')
-        np.save("../pipeline/data/v_iashin_i3d/" + video_file_name + ".npy", data)
+        fps = list(feature_dict.items())[1]
+        timestamp = list(feature_dict.items())[2]
+
+        # Reshape the data to fit into the TSU model
+        rgb_data = np.expand_dims(rgb[1], axis=(2, 1))
+
+        rgb_dir =  args.output_path
+        fps_dir = './output/FPS/'
+        timestamps_dir = './output/TIMESTAMPS/'
+
+        rgb_dir_exists = os.path.isdir(rgb_dir)
+        fps_dir_exists = os.path.isdir(fps_dir)
+        timestamps_dir_exists = os.path.isdir(timestamps_dir)
+
+        all_dir_exist = [[rgb_dir, rgb_dir_exists], [fps_dir, fps_dir_exists], [timestamps_dir, timestamps_dir_exists]]
+
+        for dir_exist in all_dir_exist:
+            if dir_exist[1] == False:
+                os.mkdir(dir_exist[0])
+
+        np.save(rgb_dir + video_file_name + "_rgb.npy", rgb_data)
+        np.save(fps_dir + video_file_name + "_fps.npy", fps)
+        np.save(timestamps_dir + video_file_name + "_timestamps_ms.npy", timestamp)
 
 
 if __name__ == '__main__':

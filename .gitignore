@@ -139,3 +139,7 @@ pipeline/results/PDAN_TSU_RGB/
 
 *.csv
 *.jpg
+
+*.pkl
+pipeline/models/PDAN_TSU_RGB_Train_*
+pipeline/wandb/

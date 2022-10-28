@@ -28,6 +28,13 @@ Ensure that you have the following installed:
 ```
  jupyter notebook
 ```
+## Environment File
+- Create a .env in the project root directory
+- Append the following to the .env file:
+```
+WANDB_API_KEY=<your_wandb_api_key>
+```
+
 ## Installation V2
 Run the setup.ipynb notebook to install the dependencies.
 
