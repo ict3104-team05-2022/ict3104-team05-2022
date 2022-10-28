@@ -53,6 +53,7 @@ def main(args_cli):
         args.video_paths, args.file_with_video_paths, to_shuffle=True)
 
     print(f'The number of specified videos: {len(video_paths)}')
+    print(f'Output path: {args.output_path}')
 
     for video_path in tqdm(video_paths):
         # Get the video file name from the video path
@@ -68,7 +69,7 @@ def main(args_cli):
         # Reshape the data to fit into the TSU model
         rgb_data = np.expand_dims(rgb[1], axis=(2, 1))
 
-        rgb_dir = './output/RGB_TEST/'
+        rgb_dir =  args.output_path
         fps_dir = './output/FPS/'
         timestamps_dir = './output/TIMESTAMPS/'
 
