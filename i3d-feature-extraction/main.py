@@ -21,8 +21,7 @@ def main(args_cli):
     # verbosing with the print -- haha (TODO: logging)
     print(OmegaConf.to_yaml(args))
     if args.on_extraction in ['save_numpy', 'save_pickle']:
-        # print(f'Saving features to {args.output_path}')
-        print(f'Saving features to ./data/dataset/v_iashin_i3d/')
+        print(f'Saving features to {args.output_path}')
     print('Device:', args.device)
 
     # import are done here to avoid import errors (we have two conda environements)
@@ -53,6 +52,7 @@ def main(args_cli):
         args.video_paths, args.file_with_video_paths, to_shuffle=True)
 
     print(f'The number of specified videos: {len(video_paths)}')
+    print(f'Output path: {args.output_path}')
 
     for video_path in tqdm(video_paths):
         # Get the video file name from the video path
@@ -64,7 +64,7 @@ def main(args_cli):
 
         # Reshape the data to fit into the TSU model
         rgb_data = np.expand_dims(rgb[1], axis=(2, 1))
-        rgb_dir = '../data/dataset/v_iashin_i3d/'
+        rgb_dir = args.output_path
         rgb_dir_exists = os.path.isdir(rgb_dir)
 
         if not rgb_dir_exists:
