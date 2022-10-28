@@ -491,26 +491,31 @@ def create_caption_video(arrayWithCaptions):
         except ZeroDivisionError:
             print("Please ensure the video file is in the data folder!")
 
-        # overlay captions on the frame with background (image)
-        cv2.putText(image,
-                    caption,
-                    (10, int(height + 70)),
-                    font, 0.5,
-                    (0, 0, 0),
-                    2,
-                    cv2.LINE_4)
+        event = ""
+        event2 = ""
 
         # Overlay ground truth captions (current event provided by the annotation csv file)
         if int(events[current_position_annotation][1]) <= i <= int(
                 events[current_position_annotation][2]):
-            event = events[current_position_annotation][0]
-            cv2.putText(image,
-                        event,
-                        (350, int(height + 70)),
-                        font, 0.5,
-                        (0, 0, 0),
-                        2,
-                        cv2.LINE_4)
+            event = events[current_position_annotation][0] # First Annotation Event
+
+            # If caption is similar to event caption will be in green colour
+            if caption_name == event:
+                cv2.putText(image,
+                            event,
+                            (350, int(height + 70)),
+                            font, 0.5,
+                            (0, 255, 0),
+                            2,
+                            cv2.LINE_4)
+            else:
+                cv2.putText(image,
+                            event,
+                            (350, int(height + 70)),
+                            font, 0.5,
+                            (0, 0, 255),
+                            2,
+                            cv2.LINE_4)
 
             # Append event name into array
             predicted_events_array.append(caption_name)
@@ -523,14 +528,24 @@ def create_caption_video(arrayWithCaptions):
             if current_position_annotation < len(events) - 1:
                 if int(events[current_position_annotation + 1][1]) <= i <= int(
                         events[current_position_annotation + 1][2]):
-                    event2 = events[current_position_annotation + 1][0]
-                    cv2.putText(image,
-                                event2,
-                                (350, int(height + 85)),
-                                font, 0.5,
-                                (0, 0, 0),
-                                2,
-                                cv2.LINE_4)
+                    event2 = events[current_position_annotation + 1][0] # Second Annotation Event
+
+                    if caption_name == event2:
+                        cv2.putText(image,
+                                    event2,
+                                    (350, int(height + 85)),
+                                    font, 0.5,
+                                    (0, 255, 0),
+                                    2,
+                                    cv2.LINE_4)
+                    else:
+                        cv2.putText(image,
+                                    event2,
+                                    (350, int(height + 85)),
+                                    font, 0.5,
+                                    (0, 0, 255),
+                                    2,
+                                    cv2.LINE_4)
 
                     # Append event name into array
                     predicted_events_array.append(caption_name)
@@ -538,6 +553,23 @@ def create_caption_video(arrayWithCaptions):
                     prediction_start_frames_array.append(i)
                     # Append accuracy captions into array
                     prediction_accuracy_array.append(float(caption_value))
+            if caption_name == event or caption_name == event2:
+                # overlay captions on the frame with background (image)
+                cv2.putText(image,
+                            caption,
+                            (10, int(height + 70)),
+                            font, 0.5,
+                            (0, 255, 0),
+                            2,
+                            cv2.LINE_4)
+            else:
+                cv2.putText(image,
+                            caption,
+                            (10, int(height + 70)),
+                            font, 0.5,
+                            (0, 0, 255),
+                            2,
+                            cv2.LINE_4)
 
         # If frame is more than or equal to  end frame of the event, move to the next event and it is not the last event
         if i >= int(events[current_position_annotation][2]) and current_position_annotation < len(events) - 1:
