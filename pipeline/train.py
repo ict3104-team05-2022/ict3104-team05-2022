@@ -2,11 +2,16 @@ from __future__ import division
 import time
 import os
 import argparse
+import csv
 import sys
 import torch
+import wandb
+import pickle
+import pandas as pd
 
 import warnings
 warnings.filterwarnings("ignore")
+os.environ["WANDB_SILENT"] = "True"
 
 # Convert input variable to true or false
 def str2bool(v):
@@ -41,7 +46,7 @@ parser.add_argument('-batch_size', type=str, default='False')
 parser.add_argument('-kernelsize', type=str, default='False')
 parser.add_argument('-feat', type=str, default='False')
 parser.add_argument('-split_setting', type=str, default='CS')
-parser.add_argument('-input_folder', type=str, default='./data/I3D')
+parser.add_argument('-input_folder', type=str, default='./data/dataset/v_iashin_i3d')
 args = parser.parse_args()
 
 # Import neccessary libraries
@@ -159,6 +164,13 @@ def load_data(train_split, val_split, root):
 
 # train the model
 def run(models, criterion, num_epochs=50):
+    wandb.init(project="training-visualisation",
+            config={
+                "batch_size": int(args.batch_size),
+                "learning_rate": float(args.lr),
+                "epochs": int(args.epoch),
+            })
+
     since = time.time()
     best_model = None
     best_map = 0.0
@@ -169,32 +181,36 @@ def run(models, criterion, num_epochs=50):
         #print('-' * 10)
             probs = []
             for model, gpu, dataloader, optimizer, sched, model_file in models:
-                with tqdm(dataloader['train'], unit="batch") as tepoch:
+                with tqdm(dataloader['train']) as tepoch:
                     tepoch.set_description('Epoch {}/{} train'.format(epoch, num_epochs - 1))
                     train_map, train_loss = train_step(model, gpu, optimizer, tepoch, epoch)
 
-                with tqdm(dataloader['val'], unit="batch") as tepoch:
-                    tepoch.set_description('Epoch {}/{} eval'.format(epoch, num_epochs - 1))
+                with tqdm(dataloader['val']) as tepoch:
+                    tepoch.set_description('Epoch {}/{} val'.format(epoch, num_epochs - 1))
                     prob_val, val_loss, val_map = val_step(model, gpu, tepoch, epoch)
                     probs.append(prob_val)
                     sched.step(val_loss)
-
-
+                    
+                    wandb.log({"loss": val_loss.item(), "accuracy": val_map.item()})
 
                     if best_map < val_map:
                         best_map = val_map
                         pbar.set_postfix({'loss':val_loss.item(),'best accuracy':best_map.item()})
+                        wandb.log({"best accuracy": best_map.item()})
                         best_model = model
-                        torch.save(model.state_dict(),
-                                   './results/' + str(args.model) + '/weight_epoch_' + str(args.lr) + '_' + str(epoch))
-                        torch.save(model, './results/' + str(args.model) + '/model_epoch_' + str(args.lr) + '_' + str(epoch))
+                        pickle.dump(prob_val, open('./models/' + str(epoch) + '.pkl', 'wb'), pickle.HIGHEST_PROTOCOL)
+                        # torch.save(model.state_dict(),
+                        #            './results/' + str(args.model) + '/weight_epoch_' + str(args.lr) + '_' + str(epoch))
+                        # torch.save(model, './results/' + str(args.model) + '/model_epoch_' + str(args.lr) + '_' + str(epoch))
                         #print('save here for model: ',
                         #      './results/' + str(args.model) + '/model_epoch_' + str(args.lr) + '_' + str(epoch))
                         #print('save here for weight:',
                         #      './results/' + str(args.model) + '/weight_epoch_' + str(args.lr) + '_' + str(epoch))
 
     # Save the best model
-    torch.save(best_model, './models/PDAN_TSU_RGB_Train')
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    torch.save(best_model, f'./models/PDAN_TSU_RGB_Train_{timestr}')
+    print(f"Trained model saved in ./models/PDAN_TSU_RGB_Train_{timestr}")
 
 
 # Eval the model
@@ -317,6 +333,40 @@ def val_step(model, gpu, dataloader, epoch):
     #print(100 * apm.value())
     apm.reset()
 
+    # Creating 'Overall Accuracy (Training)' CSV file
+    # Column names: Trained On | Train Epochs | Train m-AP | Train Loss
+
+    # TODO: Trained On refers to num of video, it has been tested on.
+    #  Hence 1 TSU Video unless the model will process multiple videos.
+
+    cleaned_val_map = (str(val_map))[7:-1] # Remove strings and brackets
+    cleaned_epoch_loss = (str(epoch_loss))[7:-18] # Remove strings and brackets
+
+    df = pd.DataFrame({'Trained On': '1 TSU Video',
+                       'Train Epochs': str(int(args.epoch)),
+                       'Train m-AP': cleaned_val_map,
+                       'Train Loss': cleaned_epoch_loss
+                       }, index=[0])
+
+    # save to csv file
+    df.to_csv("Overall_Accuracy_(Training).csv", index=False)
+    filename = 'Overall_Accuracy_(Training).csv'
+
+    # Add in title Overall Accuracy (Training)
+    title = ['Overall Accuracy (Training)']
+
+    with open(filename, 'r') as readFile:
+        rd = csv.reader(readFile)
+        lines = list(rd)
+        lines.insert(0, title)
+
+    with open(filename, 'w', newline='') as writeFile:
+        wt = csv.writer(writeFile)
+        wt.writerows(lines)
+
+    readFile.close()
+    writeFile.close()
+
     return full_probs, epoch_loss, val_map
 
 
@@ -371,3 +421,6 @@ if __name__ == '__main__':
         optimizer = optim.Adam(model.parameters(), lr=lr)
         lr_sched = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=8, verbose=True)
         run([(model, 0, dataloaders, optimizer, lr_sched, args.comp_info)], criterion, num_epochs=int(args.epoch))
+        
+        if wandb.run is not None:
+            wandb.finish()
