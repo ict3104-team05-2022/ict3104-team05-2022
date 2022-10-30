@@ -356,7 +356,7 @@ def val_step(model, gpu, dataloader, epoch):
 
     df = pd.DataFrame({'Tested On': '1 TSU Video',
                        'Test Epochs': str(int(args.epoch)),
-                       'Prediction m-AP': cleaned_val_map,
+                       'Prediction m-AP': ['{:.2f}%'.format(float(cleaned_val_map))],
                        'Test Loss': cleaned_epoch_loss
                        }, index=[0])
 
@@ -385,8 +385,14 @@ def val_step(model, gpu, dataloader, epoch):
     # Creating the DataFrame
     # Get into integers for percentages
     apm_values_array = np.ceil(apm_values_array)
+    apm_values_array = apm_values_array.numpy()
+    apm_values_array = apm_values_array.tolist()
+
+    # apm_values_array = (np.rint(apm_values_array)).astype(int)
+    apm_percentage_array = ['{:.0f}%'.format(elm) for elm in apm_values_array]
+
     df = pd.DataFrame({'Activity Name': activityList,
-                       'Average Class Prediction': (apm_values_array.numpy())})
+                       'Average Class Prediction': apm_percentage_array})
 
     # save to csv file
     df.to_csv("Activity_Based_Accuracy_(Total).csv", index=False)
