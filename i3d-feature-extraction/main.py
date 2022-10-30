@@ -72,6 +72,8 @@ def main(args_cli):
 
         np.save(rgb_dir + video_file_name + ".npy", rgb_data)
 
+    print('Feature extraction complete!')
+
 
 if __name__ == '__main__':
     args_cli = OmegaConf.from_cli()
