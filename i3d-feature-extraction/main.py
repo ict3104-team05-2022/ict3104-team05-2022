@@ -6,7 +6,6 @@ from tqdm import tqdm
 
 from utils2.utils import build_cfg_path, form_list_from_user_input, sanity_check
 
-import shutil
 import os
 import os.path
 
@@ -53,6 +52,7 @@ def main(args_cli):
         args.video_paths, args.file_with_video_paths, to_shuffle=True)
 
     print(f'The number of specified videos: {len(video_paths)}')
+    print(f'Output path: {args.output_path}')
 
     for video_path in tqdm(video_paths):
         # Get the video file name from the video path
@@ -60,31 +60,19 @@ def main(args_cli):
         video_file_name = video_file_name.split('.')[0]
 
         feature_dict = extractor.extract(video_path)
-
         rgb = list(feature_dict.items())[0]
-        fps = list(feature_dict.items())[1]
-        timestamp = list(feature_dict.items())[2]
 
         # Reshape the data to fit into the TSU model
         rgb_data = np.expand_dims(rgb[1], axis=(2, 1))
-
-        rgb_dir = './output/RGB_TEST/'
-        fps_dir = './output/FPS/'
-        timestamps_dir = './output/TIMESTAMPS/'
-
+        rgb_dir = args.output_path
         rgb_dir_exists = os.path.isdir(rgb_dir)
-        fps_dir_exists = os.path.isdir(fps_dir)
-        timestamps_dir_exists = os.path.isdir(timestamps_dir)
 
-        all_dir_exist = [[rgb_dir, rgb_dir_exists], [fps_dir, fps_dir_exists], [timestamps_dir, timestamps_dir_exists]]
+        if not rgb_dir_exists:
+            os.mkdir(rgb_dir)
 
-        for dir_exist in all_dir_exist:
-            if dir_exist[1] == False:
-                os.mkdir(dir_exist[0])
+        np.save(rgb_dir + video_file_name + ".npy", rgb_data)
 
-        np.save(rgb_dir + video_file_name + "_rgb.npy", rgb_data)
-        np.save(fps_dir + video_file_name + "_fps.npy", fps)
-        np.save(timestamps_dir + video_file_name + "_timestamps_ms.npy", timestamp)
+    print('Feature extraction complete!')
 
 
 if __name__ == '__main__':

@@ -2,10 +2,12 @@ from __future__ import division
 import time
 import os
 import argparse
+import csv
 import sys
 import torch
 import wandb
 import pickle
+import pandas as pd
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -330,6 +332,40 @@ def val_step(model, gpu, dataloader, epoch):
     # print('Training accuracy:', val_map)
     #print(100 * apm.value())
     apm.reset()
+
+    # Creating 'Overall Accuracy (Training)' CSV file
+    # Column names: Trained On | Train Epochs | Train m-AP | Train Loss
+
+    # TODO: Trained On refers to num of video, it has been tested on.
+    #  Hence 1 TSU Video unless the model will process multiple videos.
+
+    cleaned_val_map = (str(val_map))[7:-1] # Remove strings and brackets
+    cleaned_epoch_loss = (str(epoch_loss))[7:-18] # Remove strings and brackets
+
+    df = pd.DataFrame({'Trained On': '1 TSU Video',
+                       'Train Epochs': str(int(args.epoch)),
+                       'Train m-AP': cleaned_val_map,
+                       'Train Loss': cleaned_epoch_loss
+                       }, index=[0])
+
+    # save to csv file
+    df.to_csv("Overall_Accuracy_(Training).csv", index=False)
+    filename = 'Overall_Accuracy_(Training).csv'
+
+    # Add in title Overall Accuracy (Training)
+    title = ['Overall Accuracy (Training)']
+
+    with open(filename, 'r') as readFile:
+        rd = csv.reader(readFile)
+        lines = list(rd)
+        lines.insert(0, title)
+
+    with open(filename, 'w', newline='') as writeFile:
+        wt = csv.writer(writeFile)
+        wt.writerows(lines)
+
+    readFile.close()
+    writeFile.close()
 
     return full_probs, epoch_loss, val_map
 

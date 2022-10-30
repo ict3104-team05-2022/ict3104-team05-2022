@@ -5,9 +5,9 @@ Nvidia Project
 ## Installation
 Ensure that you have the following installed:
 - [Anaconda](https://www.anaconda.com/products/distribution)
-- Create a virtual environment using the following command:
+- Create a virtual environment in conda using the following command:
 ```
- conda env create -n ict3104 --file environment.yml
+ conda env create -n ict3104 --file env.yml
 ```
 - Activate the virtual environment using the following command:
 ```
@@ -15,18 +15,17 @@ Ensure that you have the following installed:
 ```
 - Create and activate a virtualenv
 ```
-    pip install virtualenv
-    python -m venv venv
-    venv\Scripts\activate
+pip install virtualenv
+python -m venv venv
+venv\Scripts\activate
 ```
-- Install the following packages:
+- Install the following packages using pip:
 ```
- pip install -r requirements.txt
- pip install torch==1.10.1+cu111 torchvision==0.11.2+cu113 torchaudio==0.10.1 -f https://download.pytorch.org/whl/torch_stable.html
+pip install --no-cache-dir -f https://download.pytorch.org/whl/torch_stable.html -r requirements.txt
 ```
 - Run the following command to start the juypter notebook:
 ```
- jupyter notebook
+jupyter notebook
 ```
 ## Environment File
 - Create a .env in the project root directory
@@ -34,10 +33,3 @@ Ensure that you have the following installed:
 ```
 WANDB_API_KEY=<your_wandb_api_key>
 ```
-
-## Installation V2
-Run the setup.ipynb notebook to install the dependencies.
-
-## Binder
-You can access the binder here
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ict3104-team05-2022/ict3104-team05-2022/dev)
