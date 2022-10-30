@@ -45,8 +45,8 @@ def main():
 
     # TODO: Set data_root to the customized input dataset
     args.num_workers = 1
-    args.data_root = 'datasets/demo/frames'
-    args.save_root = os.path.join(os.path.dirname(args.data_root), 'results/')
+    args.data_root = 'datasets/demo/frames/'
+    args.save_root = os.path.join(os.path.dirname('datasets/demo/'), 'results/')
     if not os.path.isdir(args.save_root):
         os.makedirs(args.save_root)
 
@@ -97,7 +97,7 @@ def main():
     ################ DataLoader setup #################
 
     dataset = CustomizedDataset(args.data_root, args.T, args.NUM_CHUNKS[args.max_iter], source_fps, args.fps, BaseTransform(args.image_size, args.means, args.stds,args.scale_norm), anchor_mode=args.anchor_mode, im_format=im_format)
-    dataloader = torch.utils.data.DataLoader(dataset, args.batch_size, num_workers=args.num_workers,
+    dataloader = torch.utils.data.DataLoader(dataset, 4, num_workers=args.num_workers,
                                   shuffle=False, collate_fn=detection_collate, pin_memory=True)
 
     ################ Inference #################
