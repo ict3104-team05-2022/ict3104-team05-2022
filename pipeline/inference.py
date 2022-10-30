@@ -357,7 +357,7 @@ def val_step(model, gpu, dataloader, epoch):
     df = pd.DataFrame({'Tested On': '1 TSU Video',
                        'Test Epochs': str(int(args.epoch)),
                        'Prediction m-AP': ['{:.2f}%'.format(float(cleaned_val_map))],
-                       'Test Loss': cleaned_epoch_loss
+                       'Train m-Loss': ['{:.2f}'.format(float(cleaned_epoch_loss))],
                        }, index=[0])
 
     # save to csv file
