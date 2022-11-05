@@ -32,7 +32,7 @@ parser.add_argument('-rgb_model_file', type=str)
 parser.add_argument('-flow_model_file', type=str)
 parser.add_argument('-gpu', type=str, default='4')
 parser.add_argument('-dataset', type=str, default='charades')
-parser.add_argument('-rgb_root', type=str, default='no_root')
+parser.add_argument('-rgb_root', type=str, default='../data/dataset/v_iashin_i3d')
 parser.add_argument('-flow_root', type=str, default='no_root')
 parser.add_argument('-type', type=str, default='original')
 parser.add_argument('-lr', type=str, default='0.1')
@@ -46,7 +46,6 @@ parser.add_argument('-batch_size', type=str, default='False')
 parser.add_argument('-kernelsize', type=str, default='False')
 parser.add_argument('-feat', type=str, default='False')
 parser.add_argument('-split_setting', type=str, default='CS')
-parser.add_argument('-input_folder', type=str, default='./data/dataset/v_iashin_i3d')
 args = parser.parse_args()
 
 # Import neccessary libraries
@@ -93,7 +92,7 @@ if str(args.APtype) == 'map':
 batch_size = int(args.batch_size)
 
 # If it is TSU dataset, load the data to train_spilt and test_split
-if args.dataset == 'TSU':
+if args.dataset == 'TSU' or args.dataset == 'v_iashin_i3d' or args.dataset == 'I3D':
     split_setting = str(args.split_setting)
 
     from smarthome_i3d_per_video import TSU as Dataset
@@ -110,7 +109,8 @@ if args.dataset == 'TSU':
         test_split = './data/smarthome_CV_51.json'
 
     # Unknown ?
-    rgb_root = args.input_folder
+    rgb_root = args.rgb_root
+    print(rgb_root)
     skeleton_root = './data/Skeleton'
     flow_root = './data/Flow'
 
