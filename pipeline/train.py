@@ -46,6 +46,7 @@ parser.add_argument('-batch_size', type=str, default='False')
 parser.add_argument('-kernelsize', type=str, default='False')
 parser.add_argument('-feat', type=str, default='False')
 parser.add_argument('-split_setting', type=str, default='CS')
+parser.add_argument('-json_file', type=str, help='path to json file')
 args = parser.parse_args()
 
 # Import neccessary libraries
@@ -101,8 +102,9 @@ if args.dataset == 'TSU' or args.dataset == 'v_iashin_i3d' or args.dataset == 'I
     classes = 51
 
     if split_setting == 'CS':
-        train_split = './data/smarthome_CS_51_v2.json'
-        test_split = './data/smarthome_CS_51_v2.json'
+        train_split = args.json_file
+        test_split = args.json_file
+
 
     elif split_setting == 'CV':
         train_split = './data/smarthome_CV_51.json'
@@ -110,7 +112,6 @@ if args.dataset == 'TSU' or args.dataset == 'v_iashin_i3d' or args.dataset == 'I
 
     # Unknown ?
     rgb_root = args.rgb_root
-    print(rgb_root)
     skeleton_root = './data/Skeleton'
     flow_root = './data/Flow'
 
@@ -374,6 +375,7 @@ if __name__ == '__main__':
     print(str(args.model))
     print('batch_size:', batch_size)
     print('cuda_avail', torch.cuda.is_available())
+    print('CS Json File: ', args.json_file)
 
     if args.mode == 'flow':
         print('flow mode', flow_root)
