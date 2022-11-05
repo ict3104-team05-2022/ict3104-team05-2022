@@ -82,8 +82,8 @@ import json
 import pickle
 import math
 
-from tqdm.auto import trange
-from tqdm.auto import tqdm
+from tqdm.notebook import trange
+from tqdm.notebook import tqdm
 from time import sleep
 
 if str(args.APtype) == 'map':

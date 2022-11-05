@@ -3,10 +3,11 @@ import json
 import numpy as np
 import pickle
 import torch
+import warnings
 import torch._utils
 from apmeter import APMeter
 
-
+warnings.filterwarnings("ignore")
 def make_gt(gt_file, logits, num_classes=51):
     gt_new = {}
     with open(gt_file, 'r') as f:
