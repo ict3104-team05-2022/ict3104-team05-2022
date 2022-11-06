@@ -115,10 +115,6 @@ def run(models, criterion, num_epochs=50):
                 print("epoch",epoch,"Best Val Map Update",Best_val_map)
                 pickle.dump(prob_val, open('./save_logit/' + str(epoch) + '.pkl', 'wb'), pickle.HIGHEST_PROTOCOL)
                 print("logit_saved at:","./save_logit/" + str(epoch) + ".pkl")
-        # Save the best model
-    timestr = time.strftime("%Y%m%d-%H%M%S")
-    torch.save(best_model, f'./save_logit/MSTCT_Train_{timestr}')
-    print(f"Trained model saved in ./save_logit/PDAN_TSU_RGB_Train_{timestr}")
 
 
 def eval_model(model, dataloader, baseline=False):
