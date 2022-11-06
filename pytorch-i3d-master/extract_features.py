@@ -19,6 +19,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.optim import lr_scheduler
 from torch.autograd import Variable
+from torch.autograd import Variable
 
 import torchvision
 from torchvision import datasets, transforms
@@ -30,6 +31,9 @@ import numpy as np
 from pytorch_i3d import InceptionI3d
 
 from charades_dataset_full import Charades as Dataset
+
+import warnings
+warnings.filterwarnings("ignore")
 
 
 def run(max_steps=64e3, mode='rgb', root='/ssd2/charades/Charades_v1_rgb', split='charadesV2.json', batch_size=1, load_model='', save_dir=''):
