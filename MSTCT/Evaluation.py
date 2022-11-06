@@ -1,9 +1,10 @@
 import json
-import pickle5 as pickle
+import pickle
 from apmeter import APMeter
 import numpy as np
+import warnings
 from utils import *
-
+warnings.filterwarnings("ignore")
 
 def make_gt(gt_file, logits, num_classes=157):
     gt_new = {}
@@ -43,12 +44,12 @@ def make_gt(gt_file, logits, num_classes=157):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-pkl_path', type=str, default='./save_logit/1.pkl')  # './test.pkl'
+    parser.add_argument('-pkl_path', type=str, default='./save_logit/2.pkl')  # './test.pkl'
     args = parser.parse_args()
 
     pkl_path = args.pkl_path
 
-    gt_file = './data/charades.json'
+    gt_file = './data/charadesV2.json'
     classes = 157
 
     pkl = open(pkl_path, 'rb')

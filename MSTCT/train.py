@@ -12,6 +12,8 @@ import random
 from utils import *
 from apmeter import APMeter
 import os
+import warnings
+warnings.filterwarnings("ignore")
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-mode',type=str,  default='rgb',   help='rgb or flow (or joint for eval)')
@@ -19,14 +21,14 @@ parser.add_argument('-train', type=str2bool, default='True', help='train or eval
 parser.add_argument('-comp_info', type=str, default='False', help='comp_info')
 parser.add_argument('-gpu', type=str, default='1')
 parser.add_argument('-dataset', type=str, default='charades')
-parser.add_argument('-rgb_root', type=str, default='no_root')
+parser.add_argument('-rgb_root', type=str, default='./data/pytorch-i3d')
 parser.add_argument('-flow_root', type=str, default='no_root')
 parser.add_argument('-type', type=str, default='original')
 parser.add_argument('-lr', type=str, default='0.1')
-parser.add_argument('-epoch', type=str, default='50')
-parser.add_argument('-model', type=str, default='')
+parser.add_argument('-epoch', type=str, default='3')
+parser.add_argument('-model', type=str, default='MS_TCT')
 parser.add_argument('-load_model', type=str, default='False')
-parser.add_argument('-batch_size', type=str, default='32')
+parser.add_argument('-batch_size', type=str, default='1')
 parser.add_argument('-num_clips', type=str, default='246')
 parser.add_argument('-skip', type=str, default='0')
 parser.add_argument('-num_layer', type=str, default='False')
@@ -45,7 +47,7 @@ torch.cuda.manual_seed_all(SEED)
 random.seed(SEED)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
-print('Random_SEED:', SEED)
+# print('Random_SEED:', SEED)
 
 
 batch_size = int(args.batch_size)
@@ -55,16 +57,16 @@ if args.dataset == 'charades':
     from charades_dataloader import Charades as Dataset
 
     if str(args.unisize) == "True":
-        print("uni-size padd all T to",args.num_clips)
+        # print("uni-size padd all T to",args.num_clips)
         from charades_dataloader import collate_fn_unisize
         collate_fn_f = collate_fn_unisize(args.num_clips)
         collate_fn = collate_fn_f.charades_collate_fn_unisize
     else:
         from charades_dataloader import mt_collate_fn as collate_fn
 
-    train_split = './data/charades.json'
+    train_split = './data/charadesV2.json'
     test_split = train_split
-    rgb_root =  '/rgb_feat_rgb' 
+    rgb_root =  args.rgb_root
     flow_root = '/flow_feat_path/' # optional
     # rgb_of=[rgb_root,flow_root]
     classes = 157

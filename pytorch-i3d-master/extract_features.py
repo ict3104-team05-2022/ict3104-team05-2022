@@ -4,11 +4,11 @@ import sys
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-mode', type=str, help='rgb or flow')
-parser.add_argument('-load_model', type=str)
-parser.add_argument('-root', type=str)
-parser.add_argument('-gpu', type=str)
-parser.add_argument('-save_dir', type=str)
+parser.add_argument('-mode', type=str, help='rgb or flow', default='rgb')
+parser.add_argument('-load_model', type=str, default='./models/rgb_charades.pt')
+parser.add_argument('-root', type=str, default='../data/dataset/Charades')
+parser.add_argument('-gpu', type=str, default='0')
+parser.add_argument('-save_dir', type=str, default='./results/')
 
 args = parser.parse_args()
 os.environ["CUDA_VISIBLE_DEVICES"]=args.gpu
@@ -23,7 +23,7 @@ from torch.autograd import Variable
 import torchvision
 from torchvision import datasets, transforms
 import videotransforms
-
+from tqdm import tqdm
 
 import numpy as np
 
@@ -63,7 +63,8 @@ def run(max_steps=64e3, mode='rgb', root='/ssd2/charades/Charades_v1_rgb', split
         tot_cls_loss = 0.0
                     
         # Iterate over data.
-        for data in dataloaders[phase]:
+        for data in tqdm(dataloaders[phase]):
+
             # get the inputs
             inputs, labels, name = data
             if os.path.exists(os.path.join(save_dir, name[0]+'.npy')):
