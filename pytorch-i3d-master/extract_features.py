@@ -32,7 +32,7 @@ from pytorch_i3d import InceptionI3d
 from charades_dataset_full import Charades as Dataset
 
 
-def run(max_steps=64e3, mode='rgb', root='/ssd2/charades/Charades_v1_rgb', split='charades/charades.json', batch_size=1, load_model='', save_dir=''):
+def run(max_steps=64e3, mode='rgb', root='/ssd2/charades/Charades_v1_rgb', split='charadesV2.json', batch_size=1, load_model='', save_dir=''):
     # setup dataset
     test_transforms = transforms.Compose([videotransforms.CenterCrop(224)])
 
@@ -70,10 +70,10 @@ def run(max_steps=64e3, mode='rgb', root='/ssd2/charades/Charades_v1_rgb', split
                 continue
 
             b,c,t,h,w = inputs.shape
-            if t > 1600:
+            if t > 128:
                 features = []
-                for start in range(1, t-56, 1600):
-                    end = min(t-1, start+1600+56)
+                for start in range(1, t-56, 128):
+                    end = min(t-1, start+128+56)
                     start = max(1, start-48)
                     ip = Variable(torch.from_numpy(inputs.numpy()[:,:,start:end]).cuda(), volatile=True)
                     features.append(i3d.extract_features(ip).squeeze(0).permute(1,2,3,0).data.cpu().numpy())
