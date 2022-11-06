@@ -10,7 +10,9 @@ import wandb
 
 warnings.filterwarnings("ignore")
 from tqdm import tqdm
+
 os.environ["WANDB_SILENT"] = "True"
+
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -147,11 +149,11 @@ activityList = ["Enter", "Walk", "Make_coffee", "Get_water", "Make_Coffee",
                 "Cook.Stir", "Cook.Use_oven", "Clean_dishes.Clean_with_water",
                 "Use_tablet", "Use_glasses", "Pour.From_can"]
 
-
-# self-declared (essentially works same as run() method)
-def val_file(models, num_epochs=50):
+# val_file([(model, 0, dataloaders, optimizer, lr_sched, args.comp_info)])
+# Video Prediction
+def val_file(models):
     probs = []
-    for model, gpu, dataloader, optimizer, sched, model_file in models:
+    for model, gpu, dataloader, sched, model_file in models:
         prob_val, val_loss, val_map = val_step(model, gpu, dataloader['val'], 0)
         probs.append(prob_val)
         sched.step(val_loss)
@@ -255,11 +257,11 @@ def run_network(model, data, gpu, epoch=0, baseline=False):
     activation = model(inputs, mask_new)
 
     outputs_final = activation
-
-    if args.model == "PDAN_TSU_RGB":
-        # print('outputs_final1', outputs_final.size())
-        outputs_final = outputs_final[:, 0, :, :]
+    # if args.model == "PDAN_TSU_RGB":
+    #     print('outputs_final1', outputs_final.size())
+    #     outputs_final = outputs_final[:, 0, :, :]
     # print('outputs_final',outputs_final.size())
+    outputs_final = outputs_final[:, 0, :, :]
     outputs_final = outputs_final.permute(0, 2, 1)
     probs_f = F.sigmoid(outputs_final) * mask.unsqueeze(2)
     loss_f = F.binary_cross_entropy_with_logits(outputs_final, labels, size_average=False)
@@ -351,8 +353,8 @@ def val_step(model, gpu, dataloader, epoch):
     # TODO: Tested On refers to num of video, it has been tested on.
     #  Hence 1 TSU Video unless the model will process multiple videos.
 
-    cleaned_val_map = (str(val_map))[7:-1] # Remove strings and brackets
-    cleaned_epoch_loss = (str(epoch_loss))[7:-18] # Remove strings and brackets
+    cleaned_val_map = (str(val_map))[7:-1]  # Remove strings and brackets
+    cleaned_epoch_loss = (str(epoch_loss))[7:-18]  # Remove strings and brackets
 
     df = pd.DataFrame({'Tested On': '1 TSU Video',
                        'Test Epochs': str(int(args.epoch)),
@@ -411,6 +413,7 @@ def val_step(model, gpu, dataloader, epoch):
     # print(df)
 
     return full_probs, epoch_loss, val_map
+
 
 def create_caption_video(arrayWithCaptions):
     video = filePath
@@ -497,7 +500,7 @@ def create_caption_video(arrayWithCaptions):
         # Overlay ground truth captions (current event provided by the annotation csv file)
         if int(events[current_position_annotation][1]) <= i <= int(
                 events[current_position_annotation][2]):
-            event = events[current_position_annotation][0] # First Annotation Event
+            event = events[current_position_annotation][0]  # First Annotation Event
 
             # If caption is similar to event caption will be in green colour
             if caption_name == event:
@@ -528,7 +531,7 @@ def create_caption_video(arrayWithCaptions):
             if current_position_annotation < len(events) - 1:
                 if int(events[current_position_annotation + 1][1]) <= i <= int(
                         events[current_position_annotation + 1][2]):
-                    event2 = events[current_position_annotation + 1][0] # Second Annotation Event
+                    event2 = events[current_position_annotation + 1][0]  # Second Annotation Event
 
                     if caption_name == event2:
                         cv2.putText(image,
@@ -726,10 +729,8 @@ if __name__ == '__main__':
 
         if args.model == "PDAN_TSU_RGB":
             print("you are processing PDAN_TSU_RGB")
-            from models import PDAN as Net
-
-            model = Net(num_stages=1, num_layers=5, num_f_maps=mid_channel, dim=input_channnel, num_classes=classes)
-
+        from models import PDAN as Net
+        model = Net(num_stages=1, num_layers=5, num_f_maps=mid_channel, dim=input_channnel, num_classes=classes)
         model = torch.nn.DataParallel(model)
 
         if args.load_model != "False":
@@ -749,9 +750,8 @@ if __name__ == '__main__':
         print(lr)
         optimizer = optim.Adam(model.parameters(), lr=lr)
         lr_sched = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=8, verbose=True)
-        # run([(model, 0, dataloaders, optimizer, lr_sched, args.comp_info)], criterion, num_epochs=int(args.epoch))
         print(args.test)
         if args.test:
             run([(model, 0, dataloaders, optimizer, lr_sched, args.comp_info)], criterion, num_epochs=int(args.epoch))
         else:
-            val_file([(model, 0, dataloaders, optimizer, lr_sched, args.comp_info)], num_epochs=int(args.epoch))
+            val_file([(model, 0, dataloaders, lr_sched, args.comp_info)])
