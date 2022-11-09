@@ -1,6 +1,12 @@
 import json
 import os
+import argparse
+
 from itertools import groupby
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-rgb_path', action="store", dest='rgb_path', default=0)
+args = parser.parse_args()
 
 # opens JSON file
 json_file = open('../pipeline/data/smarthome_CS_51.json')
@@ -19,7 +25,7 @@ json_file.close()
 
 extracted_video_ids = []
 extraction_video_filenames = []
-path = '../data/dataset/v_iashin_i3d/'
+path = args.rgb_path
 
 files = os.listdir(path)
 
