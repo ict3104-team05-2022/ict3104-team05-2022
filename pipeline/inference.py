@@ -363,7 +363,6 @@ def val_step(model, gpu, dataloader, epoch):
     date_today = today.strftime("%d/%m/%Y")
     results_folder_name = date_today + '_Testing_Results'
     results_folder_name = results_folder_name.replace("/", "-")
-
     if not os.path.exists("results/" + str(results_folder_name)):
 
         # if the results_folder_name directory is not present
@@ -385,8 +384,15 @@ def val_step(model, gpu, dataloader, epoch):
 
     # save to csv file
     video_name = fileName
-    df.to_csv((video_name + "_Overall_Accuracy_(Testing).csv"), index=False)
-    filename = (video_name + '_Overall_Accuracy_(Testing).csv')
+
+    today = date.today()
+    date_today = today.strftime("%d/%m/%Y")
+    results_folder_name = date_today + '_Testing_Results'
+    results_folder_name = results_folder_name.replace("/", "-")
+
+    cwd = os.getcwd() # C:\Users\Work\Desktop\Projects\ict3104-team05-2022\pipeline
+    df.to_csv(cwd + '\\results\\' + results_folder_name + '\\' + video_name + "_Overall_Accuracy_(Testing).csv", index=False)
+    filename = cwd + '\\results\\' + results_folder_name + '\\' + video_name + "_Overall_Accuracy_(Testing).csv"
 
     # Add in title Overall Accuracy (Testing)
     title = ['Overall Accuracy (Testing)']
@@ -414,9 +420,10 @@ def val_step(model, gpu, dataloader, epoch):
 
     # save to csv file
     video_name = fileName
-    df.to_csv(video_name + "_Activity_Based_Accuracy_(Total).csv", index=False)
 
-    filename = video_name + '_Activity_Based_Accuracy_(Total).csv'
+    cwd = os.getcwd() # C:\Users\Work\Desktop\Projects\ict3104-team05-2022\pipeline
+    df.to_csv(cwd + '\\results\\' + results_folder_name + '\\' + video_name + "_Activity_Based_Accuracy_(Total).csv", index=False)
+    filename = cwd + '\\results\\' + results_folder_name + '\\' + video_name + "_Activity_Based_Accuracy_(Total).csv"
     title = ['Activity Based Accuracy (Total)']
 
     # Add in title Activity Based Accuracy (Total)
@@ -431,9 +438,6 @@ def val_step(model, gpu, dataloader, epoch):
 
     readFile.close()
     writeFile.close()
-
-    # df = pd.read_csv("Activity_Based_Accuracy_(Total).csv")
-    # print(df)
 
     return full_probs, epoch_loss, val_map
 
@@ -653,9 +657,15 @@ def create_caption_video(arrayWithCaptions):
 
     # save to csv file
     video_name = fileName
-    df.to_csv(video_name + "_Activity_Based_Accuracy_(FbyF).csv", index=False)
 
-    filename = video_name + '_Activity_Based_Accuracy_(FbyF).csv'
+    today = date.today()
+    date_today = today.strftime("%d/%m/%Y")
+    results_folder_name = date_today + '_Testing_Results'
+    results_folder_name = results_folder_name.replace("/", "-")
+
+    cwd = os.getcwd() # C:\Users\Work\Desktop\Projects\ict3104-team05-2022\pipeline
+    df.to_csv(cwd + '\\results\\' + results_folder_name + '\\' + video_name + "_Activity_Based_Accuracy_(FbyF).csv", index=False)
+    filename = cwd + '\\results\\' + results_folder_name + '\\' + video_name + "_Activity_Based_Accuracy_(FbyF).csv"
     title = ['Activity Based Accuracy (Frame by Frame)']
 
     # Add in title Activity Based Accuracy (Total)
@@ -670,9 +680,6 @@ def create_caption_video(arrayWithCaptions):
 
     readFile.close()
     writeFile.close()
-
-    df = pd.read_csv("Activity_Based_Accuracy_(FbyF).csv")
-    # print(df)
 
     print('Video Inference Processing complete!')
 

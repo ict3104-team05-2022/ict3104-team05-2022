@@ -4,6 +4,8 @@ import os
 import argparse
 import csv
 import sys
+from datetime import date
+
 import torch
 import wandb
 import pickle
@@ -348,8 +350,14 @@ def val_step(model, gpu, dataloader, epoch):
 
     # save to csv file
     video_name = args.input_video_file[:-4]
-    df.to_csv(video_name + "_Overall_Accuracy_(Training).csv", index=False)
-    filename = video_name + 'Overall_Accuracy_(Training).csv'
+    today = date.today()
+    date_today = today.strftime("%d/%m/%Y")
+    results_folder_name = date_today + '_Training_Results'
+    results_folder_name = results_folder_name.replace("/", "-")
+
+    cwd = os.getcwd() # C:\Users\Work\Desktop\Projects\ict3104-team05-2022\pipeline
+    df.to_csv(cwd + '\\results\\' + results_folder_name + '\\' + video_name + "_Overall_Accuracy_(Training).csv", index=False)
+    filename = cwd + '\\results\\' + results_folder_name + '\\' + video_name + "_Overall_Accuracy_(Training).csv"
 
     # Add in title Overall Accuracy (Training)
     title = ['Overall Accuracy (Training)']
