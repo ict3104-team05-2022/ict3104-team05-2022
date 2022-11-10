@@ -6,6 +6,8 @@ import os
 import sys
 import time
 import warnings
+from datetime import date
+
 import wandb
 
 warnings.filterwarnings("ignore")
@@ -347,11 +349,30 @@ def val_step(model, gpu, dataloader, epoch):
     # print(type(apm_values_array)) # <class 'torch.Tensor'>
     apm.reset()
 
+    # Create results folder if it doesn't exist
+    if not os.path.exists("results"):
+
+        # if the results directory is not present
+        # then create it.
+        os.makedirs("results")
+
+    # Create folder based on the day model is ran
+    today = date.today()
+
+    # dd/mm/YY
+    date_today = today.strftime("%d/%m/%Y")
+    results_folder_name = date_today + '_Testing_Results'
+    results_folder_name = results_folder_name.replace("/", "-")
+
+    if not os.path.exists("results/" + str(results_folder_name)):
+
+        # if the results_folder_name directory is not present
+        # then create it.
+        os.makedirs("results/" + results_folder_name)
+
+
     # Creating 'Overall Accuracy (Testing)' CSV file
     # Column names: Tested On | Test Epochs | Test m-AP | Test Loss
-
-    # TODO: Tested On refers to num of video, it has been tested on.
-    #  Hence 1 TSU Video unless the model will process multiple videos.
 
     cleaned_val_map = (str(val_map))[7:-1]  # Remove strings and brackets
     cleaned_epoch_loss = (str(epoch_loss))[7:-18]  # Remove strings and brackets
@@ -363,8 +384,9 @@ def val_step(model, gpu, dataloader, epoch):
                        }, index=[0])
 
     # save to csv file
-    df.to_csv("Overall_Accuracy_(Testing).csv", index=False)
-    filename = 'Overall_Accuracy_(Testing).csv'
+    video_name = fileName
+    df.to_csv((video_name + "_Overall_Accuracy_(Testing).csv"), index=False)
+    filename = (video_name + '_Overall_Accuracy_(Testing).csv')
 
     # Add in title Overall Accuracy (Testing)
     title = ['Overall Accuracy (Testing)']
@@ -391,9 +413,10 @@ def val_step(model, gpu, dataloader, epoch):
                        'Average Class Prediction': (apm_values_array.numpy())})
 
     # save to csv file
-    df.to_csv("Activity_Based_Accuracy_(Total).csv", index=False)
+    video_name = fileName
+    df.to_csv(video_name + "_Activity_Based_Accuracy_(Total).csv", index=False)
 
-    filename = 'Activity_Based_Accuracy_(Total).csv'
+    filename = video_name + '_Activity_Based_Accuracy_(Total).csv'
     title = ['Activity Based Accuracy (Total)']
 
     # Add in title Activity Based Accuracy (Total)
@@ -409,7 +432,7 @@ def val_step(model, gpu, dataloader, epoch):
     readFile.close()
     writeFile.close()
 
-    df = pd.read_csv("Activity_Based_Accuracy_(Total).csv")
+    # df = pd.read_csv("Activity_Based_Accuracy_(Total).csv")
     # print(df)
 
     return full_probs, epoch_loss, val_map
@@ -629,9 +652,10 @@ def create_caption_video(arrayWithCaptions):
     df.transpose()
 
     # save to csv file
-    df.to_csv("Activity_Based_Accuracy_(FbyF).csv", index=False)
+    video_name = fileName
+    df.to_csv(video_name + "_Activity_Based_Accuracy_(FbyF).csv", index=False)
 
-    filename = 'Activity_Based_Accuracy_(FbyF).csv'
+    filename = video_name + '_Activity_Based_Accuracy_(FbyF).csv'
     title = ['Activity Based Accuracy (Frame by Frame)']
 
     # Add in title Activity Based Accuracy (Total)
