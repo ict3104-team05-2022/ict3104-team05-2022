@@ -636,22 +636,39 @@ def create_caption_video(arrayWithCaptions):
     # print(f'predicted_events_array {len(predicted_events_array)}\n'
     #       f'prediction_start_frames_array {len(prediction_start_frames_array)}\n'
     #       f'prediction_end_frames_array {len(prediction_end_frames_array)}\n'
-    #       f'video_names_array {len(video_names_array)}\n'
     #       f'prediction_accuracy_array {len(prediction_accuracy_array)}')
 
+    arr_events = []
+    arr_start_frame = []
+    arr_end_frame = []
+    arr_predictions = []
+
+    arr_events.append(predicted_events_array[0])
+    arr_start_frame.append(prediction_start_frames_array[0])
+
+    for index, item in enumerate(predicted_events_array):
+        if index != 0:
+            if predicted_events_array[index] != predicted_events_array[index-1]:
+                arr_events.append(predicted_events_array[index])
+                arr_start_frame.append(prediction_start_frames_array[index])
+                arr_end_frame.append(prediction_start_frames_array[index] - 1)
+                arr_predictions.append(prediction_accuracy_array[index])
+
+    arr_end_frame.append(prediction_start_frames_array[len(prediction_start_frames_array) - 1])
+    arr_predictions.append(prediction_accuracy_array[len(prediction_accuracy_array) - 1])
+
+    # print('arr_events: ', arr_events, len(arr_events))
+    # print('arr_start_frame', arr_start_frame, len(arr_start_frame))
+    # print('arr_end_frame: ', arr_end_frame, len(arr_end_frame))
+    # print('arr_predictions', arr_predictions, len(arr_predictions))
+
     # Prepare Pandas dataframe for CSV output
-    # TODO: Tabulate proper start and end frames and add in corresponding video names
-    # a = {'Event':predicted_events_array,
-    #           'Start_Frame':prediction_start_frames_array,
-    #           'End_Frame':prediction_end_frames_array,
-    #           'Video_Name':video_names_array,
-    #           'Prediction Accuracy for the video':prediction_accuracy_array}
 
     # Creating Activity Based Accuracy (Frame by Frame) CSV file
-    # TODO: Convert prediction accuracy values into integers
-    csv_data = {'Event': predicted_events_array,
-                'Start_Frame': prediction_start_frames_array,
-                'Prediction Accuracy for the video': prediction_accuracy_array}
+    csv_data = {'Event': arr_events,
+                'Start_Frame': arr_start_frame,
+                'End_Frame':arr_end_frame,
+                'Prediction Accuracy for the video': arr_predictions}
     df = pd.DataFrame.from_dict(csv_data, orient='columns')
     df.transpose()
 
