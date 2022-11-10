@@ -6,6 +6,8 @@ import os
 import sys
 import time
 import warnings
+from datetime import date
+
 import wandb
 
 warnings.filterwarnings("ignore")
@@ -334,6 +336,9 @@ def val_step(model, gpu, dataloader, epoch):
         probs = probs.squeeze()
 
         wandb.log({"loss": loss.data})
+        val_map = torch.sum(100 * apm.value()) / torch.nonzero(100 * apm.value()).size()[0]
+        wandb.log({"val_map": val_map})
+        wandb.log({"avg_class_accuracy": sum(apm.value()) / len(apm.value())})
 
         full_probs[other[0][0]] = probs.data.cpu().numpy().T
 
@@ -347,11 +352,29 @@ def val_step(model, gpu, dataloader, epoch):
     # print(type(apm_values_array)) # <class 'torch.Tensor'>
     apm.reset()
 
+    # Create results folder if it doesn't exist
+    if not os.path.exists("results"):
+
+        # if the results directory is not present
+        # then create it.
+        os.makedirs("results")
+
+    # Create folder based on the day model is ran
+    today = date.today()
+
+    # dd/mm/YY
+    date_today = today.strftime("%d/%m/%Y")
+    results_folder_name = date_today + '_Testing_Results'
+    results_folder_name = results_folder_name.replace("/", "-")
+    if not os.path.exists("results/" + str(results_folder_name)):
+
+        # if the results_folder_name directory is not present
+        # then create it.
+        os.makedirs("results/" + results_folder_name)
+
+
     # Creating 'Overall Accuracy (Testing)' CSV file
     # Column names: Tested On | Test Epochs | Test m-AP | Test Loss
-
-    # TODO: Tested On refers to num of video, it has been tested on.
-    #  Hence 1 TSU Video unless the model will process multiple videos.
 
     cleaned_val_map = (str(val_map))[7:-1]  # Remove strings and brackets
     cleaned_epoch_loss = (str(epoch_loss))[7:-18]  # Remove strings and brackets
@@ -363,8 +386,16 @@ def val_step(model, gpu, dataloader, epoch):
                        }, index=[0])
 
     # save to csv file
-    df.to_csv("Overall_Accuracy_(Testing).csv", index=False)
-    filename = 'Overall_Accuracy_(Testing).csv'
+    video_name = fileName
+
+    today = date.today()
+    date_today = today.strftime("%d/%m/%Y")
+    results_folder_name = date_today + '_Testing_Results'
+    results_folder_name = results_folder_name.replace("/", "-")
+
+    cwd = os.getcwd() # C:\Users\Work\Desktop\Projects\ict3104-team05-2022\pipeline
+    df.to_csv(cwd + '\\results\\' + results_folder_name + '\\' + video_name + "_Overall_Accuracy_(Testing).csv", index=False)
+    filename = cwd + '\\results\\' + results_folder_name + '\\' + video_name + "_Overall_Accuracy_(Testing).csv"
 
     # Add in title Overall Accuracy (Testing)
     title = ['Overall Accuracy (Testing)']
@@ -391,9 +422,11 @@ def val_step(model, gpu, dataloader, epoch):
                        'Average Class Prediction': (apm_values_array.numpy())})
 
     # save to csv file
-    df.to_csv("Activity_Based_Accuracy_(Total).csv", index=False)
+    video_name = fileName
 
-    filename = 'Activity_Based_Accuracy_(Total).csv'
+    cwd = os.getcwd() # C:\Users\Work\Desktop\Projects\ict3104-team05-2022\pipeline
+    df.to_csv(cwd + '\\results\\' + results_folder_name + '\\' + video_name + "_Activity_Based_Accuracy_(Total).csv", index=False)
+    filename = cwd + '\\results\\' + results_folder_name + '\\' + video_name + "_Activity_Based_Accuracy_(Total).csv"
     title = ['Activity Based Accuracy (Total)']
 
     # Add in title Activity Based Accuracy (Total)
@@ -408,9 +441,6 @@ def val_step(model, gpu, dataloader, epoch):
 
     readFile.close()
     writeFile.close()
-
-    df = pd.read_csv("Activity_Based_Accuracy_(Total).csv")
-    # print(df)
 
     return full_probs, epoch_loss, val_map
 
@@ -606,32 +636,46 @@ def create_caption_video(arrayWithCaptions):
     # close all windows
     cv2.destroyAllWindows()
 
-    # print(f'predicted_events_array {len(predicted_events_array)}\n'
-    #       f'prediction_start_frames_array {len(prediction_start_frames_array)}\n'
-    #       f'prediction_end_frames_array {len(prediction_end_frames_array)}\n'
-    #       f'video_names_array {len(video_names_array)}\n'
-    #       f'prediction_accuracy_array {len(prediction_accuracy_array)}')
+    arr_events = []
+    arr_start_frame = []
+    arr_end_frame = []
+    arr_predictions = []
+
+    arr_events.append(predicted_events_array[0])
+    arr_start_frame.append(prediction_start_frames_array[0])
+
+    for index, item in enumerate(predicted_events_array):
+        if index != 0:
+            if predicted_events_array[index] != predicted_events_array[index-1]:
+                arr_events.append(predicted_events_array[index])
+                arr_start_frame.append(prediction_start_frames_array[index])
+                arr_end_frame.append(prediction_start_frames_array[index] - 1)
+                arr_predictions.append(prediction_accuracy_array[index])
+
+    arr_end_frame.append(prediction_start_frames_array[len(prediction_start_frames_array) - 1])
+    arr_predictions.append(prediction_accuracy_array[len(prediction_accuracy_array) - 1])
 
     # Prepare Pandas dataframe for CSV output
-    # TODO: Tabulate proper start and end frames and add in corresponding video names
-    # a = {'Event':predicted_events_array,
-    #           'Start_Frame':prediction_start_frames_array,
-    #           'End_Frame':prediction_end_frames_array,
-    #           'Video_Name':video_names_array,
-    #           'Prediction Accuracy for the video':prediction_accuracy_array}
 
     # Creating Activity Based Accuracy (Frame by Frame) CSV file
-    # TODO: Convert prediction accuracy values into integers
-    csv_data = {'Event': predicted_events_array,
-                'Start_Frame': prediction_start_frames_array,
-                'Prediction Accuracy for the video': prediction_accuracy_array}
+    csv_data = {'Event': arr_events,
+                'Start_Frame': arr_start_frame,
+                'End_Frame':arr_end_frame,
+                'Prediction Accuracy for the video': arr_predictions}
     df = pd.DataFrame.from_dict(csv_data, orient='columns')
     df.transpose()
 
     # save to csv file
-    df.to_csv("Activity_Based_Accuracy_(FbyF).csv", index=False)
+    video_name = fileName
 
-    filename = 'Activity_Based_Accuracy_(FbyF).csv'
+    today = date.today()
+    date_today = today.strftime("%d/%m/%Y")
+    results_folder_name = date_today + '_Testing_Results'
+    results_folder_name = results_folder_name.replace("/", "-")
+
+    cwd = os.getcwd() # C:\Users\Work\Desktop\Projects\ict3104-team05-2022\pipeline
+    df.to_csv(cwd + '\\results\\' + results_folder_name + '\\' + video_name + "_Activity_Based_Accuracy_(FbyF).csv", index=False)
+    filename = cwd + '\\results\\' + results_folder_name + '\\' + video_name + "_Activity_Based_Accuracy_(FbyF).csv"
     title = ['Activity Based Accuracy (Frame by Frame)']
 
     # Add in title Activity Based Accuracy (Total)
@@ -647,11 +691,7 @@ def create_caption_video(arrayWithCaptions):
     readFile.close()
     writeFile.close()
 
-    df = pd.read_csv("Activity_Based_Accuracy_(FbyF).csv")
-    # print(df)
-
     print('Video Inference Processing complete!')
-
 
 def readCSV():
     # Import training video's annotations:

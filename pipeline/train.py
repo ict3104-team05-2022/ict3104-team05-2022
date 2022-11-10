@@ -4,6 +4,8 @@ import os
 import argparse
 import csv
 import sys
+from datetime import date
+
 import torch
 import wandb
 import pickle
@@ -337,9 +339,6 @@ def val_step(model, gpu, dataloader, epoch):
     # Creating 'Overall Accuracy (Training)' CSV file
     # Column names: Trained On | Train Epochs | Train m-AP | Train Loss
 
-    # TODO: Trained On refers to num of video, it has been tested on.
-    #  Hence 1 TSU Video unless the model will process multiple videos.
-
     cleaned_val_map = (str(val_map))[7:-1] # Remove strings and brackets
     cleaned_epoch_loss = (str(epoch_loss))[7:-18] # Remove strings and brackets
 
@@ -350,8 +349,15 @@ def val_step(model, gpu, dataloader, epoch):
                        }, index=[0])
 
     # save to csv file
-    df.to_csv("Overall_Accuracy_(Training).csv", index=False)
-    filename = 'Overall_Accuracy_(Training).csv'
+    video_name = args.input_video_file[:-4]
+    today = date.today()
+    date_today = today.strftime("%d/%m/%Y")
+    results_folder_name = date_today + '_Training_Results'
+    results_folder_name = results_folder_name.replace("/", "-")
+
+    cwd = os.getcwd() # C:\Users\Work\Desktop\Projects\ict3104-team05-2022\pipeline
+    df.to_csv(cwd + '\\results\\' + results_folder_name + '\\' + video_name + "_Overall_Accuracy_(Training).csv", index=False)
+    filename = cwd + '\\results\\' + results_folder_name + '\\' + video_name + "_Overall_Accuracy_(Training).csv"
 
     # Add in title Overall Accuracy (Training)
     title = ['Overall Accuracy (Training)']
