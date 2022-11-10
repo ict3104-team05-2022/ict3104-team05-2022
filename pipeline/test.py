@@ -71,5 +71,6 @@ if __name__ == '__main__':
         
         wandb.log({"val_map": val_map})
         wandb.log({"avg_class_accuracy": sum(apm.value()) / len(apm.value())})
-
+        
+    val_map = torch.sum(100 * apm.value()) / torch.nonzero(100 * apm.value()).size()[0]
     print ("Test Frame-based map", val_map.mean())
