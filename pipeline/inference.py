@@ -636,11 +636,6 @@ def create_caption_video(arrayWithCaptions):
     # close all windows
     cv2.destroyAllWindows()
 
-    # print(f'predicted_events_array {len(predicted_events_array)}\n'
-    #       f'prediction_start_frames_array {len(prediction_start_frames_array)}\n'
-    #       f'prediction_end_frames_array {len(prediction_end_frames_array)}\n'
-    #       f'prediction_accuracy_array {len(prediction_accuracy_array)}')
-
     arr_events = []
     arr_start_frame = []
     arr_end_frame = []
@@ -659,11 +654,6 @@ def create_caption_video(arrayWithCaptions):
 
     arr_end_frame.append(prediction_start_frames_array[len(prediction_start_frames_array) - 1])
     arr_predictions.append(prediction_accuracy_array[len(prediction_accuracy_array) - 1])
-
-    # print('arr_events: ', arr_events, len(arr_events))
-    # print('arr_start_frame', arr_start_frame, len(arr_start_frame))
-    # print('arr_end_frame: ', arr_end_frame, len(arr_end_frame))
-    # print('arr_predictions', arr_predictions, len(arr_predictions))
 
     # Prepare Pandas dataframe for CSV output
 
@@ -702,7 +692,6 @@ def create_caption_video(arrayWithCaptions):
     writeFile.close()
 
     print('Video Inference Processing complete!')
-
 
 def readCSV():
     # Import training video's annotations:
