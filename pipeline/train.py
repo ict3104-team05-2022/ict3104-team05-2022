@@ -4,12 +4,13 @@ import os
 import argparse
 import csv
 import sys
-from datetime import date
+from datetime import date, datetime
 
 import torch
 import wandb
 import pickle
 import pandas as pd
+import re
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -95,27 +96,26 @@ if str(args.APtype) == 'map':
 batch_size = int(args.batch_size)
 
 # If it is TSU dataset, load the data to train_spilt and test_split
-if args.dataset == 'TSU' or args.dataset == 'v_iashin_i3d' or args.dataset == 'I3D':
-    split_setting = str(args.split_setting)
+split_setting = str(args.split_setting)
 
-    from smarthome_i3d_per_video import TSU as Dataset
-    from smarthome_i3d_per_video import TSU_collate_fn as collate_fn
+from smarthome_i3d_per_video import TSU as Dataset
+from smarthome_i3d_per_video import TSU_collate_fn as collate_fn
 
-    classes = 51
+classes = 51
 
-    if split_setting == 'CS':
-        train_split = args.json_file
-        test_split = args.json_file
+if split_setting == 'CS':
+    train_split = args.json_file
+    test_split = args.json_file
 
 
-    elif split_setting == 'CV':
-        train_split = './data/smarthome_CV_51.json'
-        test_split = './data/smarthome_CV_51.json'
+elif split_setting == 'CV':
+    train_split = './data/smarthome_CV_51.json'
+    test_split = './data/smarthome_CV_51.json'
 
-    # Unknown ?
-    rgb_root = args.rgb_root
-    skeleton_root = './data/Skeleton'
-    flow_root = './data/Flow'
+# Unknown ?
+rgb_root = args.rgb_root
+skeleton_root = './data/Skeleton'
+flow_root = './data/Flow'
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
@@ -193,7 +193,7 @@ def run(models, criterion, num_epochs=50):
                     prob_val, val_loss, val_map = val_step(model, gpu, tepoch, epoch)
                     probs.append(prob_val)
                     sched.step(val_loss)
-                    
+
                     wandb.log({"loss": val_loss.item(), "accuracy": val_map.item()})
 
                     if best_map < val_map:
@@ -214,6 +214,35 @@ def run(models, criterion, num_epochs=50):
     timestr = time.strftime("%Y%m%d-%H%M%S")
     torch.save(best_model, f'./models/PDAN_TSU_RGB_Train_{timestr}')
     print(f"Trained model saved in ./models/PDAN_TSU_RGB_Train_{timestr}")
+    # Creating 'Overall Accuracy (Training)' CSV file
+    # Column names: Trained On | Train Epochs | Train m-AP | Train Loss
+    cleaned_train_map = (str(train_map))[7:-1] # Remove tensor() and trailing comma
+    cleaned_val_map = (str(best_map))[7:-1]  # Remove tensor() and trailing comma
+    # Load the JSON file to dict
+    json_file = open(args.json_file, 'r')
+    video_dict = json.load(json_file)
+    noOfTrainingVideo = 0
+    noOfTestingVideo = 0
+    for values in video_dict.values():
+        # Get training videos
+        if values['subset'] == 'training':
+            noOfTrainingVideo += 1
+        # Get testing videos
+        elif values['subset'] == 'testing':
+            noOfTestingVideo += 1
+    df = pd.DataFrame({
+                       'Train On' : f'{noOfTrainingVideo} Training Videos',
+                       'Train Epochs': str(int(args.epoch)),
+                       'Train m-AP': cleaned_train_map,
+                        'Tested On': f'{noOfTestingVideo} Testing Videos',
+                       'Val Map': cleaned_val_map
+                       }, index=[0])
+
+    cwd = os.getcwd()
+    csv_file_name = f'{timestr}_Overall_Accuracy_Training.csv'
+    file_path = os.path.join(cwd, 'results', 'train', csv_file_name)
+    df.to_csv(file_path, index=False)
+    print(f"Train Result saved in {file_path}")
 
 
 # Eval the model
@@ -335,47 +364,7 @@ def val_step(model, gpu, dataloader, epoch):
     # print('Training accuracy:', val_map)
     #print(100 * apm.value())
     apm.reset()
-
-    # Creating 'Overall Accuracy (Training)' CSV file
-    # Column names: Trained On | Train Epochs | Train m-AP | Train Loss
-
-    cleaned_val_map = (str(val_map))[7:-1] # Remove strings and brackets
-    cleaned_epoch_loss = (str(epoch_loss))[7:-18] # Remove strings and brackets
-
-    df = pd.DataFrame({'Trained On': '1 TSU Video',
-                       'Train Epochs': str(int(args.epoch)),
-                       'Train m-AP': cleaned_val_map,
-                       'Train Loss': cleaned_epoch_loss
-                       }, index=[0])
-
-    # save to csv file
-    video_name = args.input_video_file[:-4]
-    today = date.today()
-    date_today = today.strftime("%d/%m/%Y")
-    results_folder_name = date_today + '_Training_Results'
-    results_folder_name = results_folder_name.replace("/", "-")
-
-    cwd = os.getcwd() # C:\Users\Work\Desktop\Projects\ict3104-team05-2022\pipeline
-    df.to_csv(cwd + '\\results\\' + results_folder_name + '\\' + video_name + "_Overall_Accuracy_(Training).csv", index=False)
-    filename = cwd + '\\results\\' + results_folder_name + '\\' + video_name + "_Overall_Accuracy_(Training).csv"
-
-    # Add in title Overall Accuracy (Training)
-    title = ['Overall Accuracy (Training)']
-
-    with open(filename, 'r') as readFile:
-        rd = csv.reader(readFile)
-        lines = list(rd)
-        lines.insert(0, title)
-
-    with open(filename, 'w', newline='') as writeFile:
-        wt = csv.writer(writeFile)
-        wt.writerows(lines)
-
-    readFile.close()
-    writeFile.close()
-
     return full_probs, epoch_loss, val_map
-
 
 if __name__ == '__main__':
     print(str(args.model))
@@ -429,6 +418,6 @@ if __name__ == '__main__':
         optimizer = optim.Adam(model.parameters(), lr=lr)
         lr_sched = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=8, verbose=True)
         run([(model, 0, dataloaders, optimizer, lr_sched, args.comp_info)], criterion, num_epochs=int(args.epoch))
-        
+
         if wandb.run is not None:
             wandb.finish()
