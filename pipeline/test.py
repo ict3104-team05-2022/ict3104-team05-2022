@@ -37,18 +37,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-split', type=str)
     parser.add_argument('-pkl_path', type=str)  # './test.pkl'
-    
-    parser.add_argument('-batch_size', type=str) 
-    parser.add_argument('-learning_rate', type=str)  
-    parser.add_argument('-epochs', type=str)
     args = parser.parse_args()
     
-    wandb.init(project="testing-visualisation",
-    config={
-        "batch_size": args.batch_size,
-        "learning_rate": args.learning_rate,
-        "epochs": args.epochs,
-    })
+    wandb.init(project="testing-visualisation")
 
     split = args.split
     pkl_path = args.pkl_path
