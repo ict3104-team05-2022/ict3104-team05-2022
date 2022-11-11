@@ -336,17 +336,11 @@ def val_step(model, gpu, dataloader, epoch):
         probs = probs.squeeze()
 
         wandb.log({"loss": loss.data})
-        val_map = torch.sum(100 * apm.value()) / torch.nonzero(100 * apm.value()).size()[0]
-        wandb.log({"val_map": val_map})
-        wandb.log({"avg_class_accuracy": sum(apm.value()) / len(apm.value())})
-
         full_probs[other[0][0]] = probs.data.cpu().numpy().T
 
     epoch_loss = tot_loss / num_iter
-
     val_map = torch.sum(100 * apm.value()) / torch.nonzero(100 * apm.value()).size()[0]
     print('val-map:', val_map)
-
     apm_values_array = 100 * apm.value()
     print(apm_values_array)
     # print(type(apm_values_array)) # <class 'torch.Tensor'>
