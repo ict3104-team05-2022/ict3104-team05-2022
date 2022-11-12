@@ -213,6 +213,19 @@ def run(models, criterion, num_epochs=50):
                     # print('save here for weight:',
                     #      './results/' + str(args.model) + '/weight_epoch_' + str(args.lr) + '_' + str(epoch))
 
+    # Create results folder if it doesn't exist
+    if not os.path.exists("results"):
+
+        # if the results directory is not present
+        # then create it.
+        os.makedirs("results")
+
+    if not os.path.exists("results/" + 'training'):
+
+        # if the results_folder_name directory is not present
+        # then create it.
+        os.makedirs("results/" + 'training')
+
     # Save the best model
     timestr = time.strftime("%Y%m%d-%H%M%S")
     torch.save(best_model, f'./models/PDAN_TSU_RGB_Train_{timestr}')
@@ -248,9 +261,25 @@ def run(models, criterion, num_epochs=50):
     }, index=[0])
 
     cwd = os.getcwd()
-    csv_file_name = f'{timestr}_Overall_Accuracy_Training.csv'
-    file_path = os.path.join(cwd, 'results', 'train', csv_file_name)
+    csv_file_name = f'{timestr}_Overall_Training_Accuracy.csv'
+    file_path = os.path.join(cwd, 'results', 'training', csv_file_name)
     df.to_csv(file_path, index=False)
+
+    # Add in title Overall Training Accuracy
+    title = ['Overall Training Accuracy']
+
+    with open(file_path, 'r') as readFile:
+        rd = csv.reader(readFile)
+        lines = list(rd)
+        lines.insert(0, title)
+
+    with open(file_path, 'w', newline='') as writeFile:
+        wt = csv.writer(writeFile)
+        wt.writerows(lines)
+
+    readFile.close()
+    writeFile.close()
+
     print(f"Training results saved in {file_path}")
 
 

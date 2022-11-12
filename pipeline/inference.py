@@ -111,6 +111,18 @@ if args.dataset == 'TSU':
 
 fileName = ""
 
+# Create results folder if it doesn't exist
+if not os.path.exists("results"):
+
+    # if the results directory is not present
+    # then create it.
+    os.makedirs("results")
+
+if not os.path.exists("results/" + 'inference'):
+
+    # if the results_folder_name directory is not present
+    # then create it.
+    os.makedirs("results/" + 'inference')
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
@@ -229,7 +241,6 @@ def run(models, criterion, num_epochs=50):
                 torch.save(model, './results/' + str(args.model) + '/model_epoch_' + str(args.lr) + '_' + str(epoch))
                 print('save here:', './results/' + str(args.model) + '/weight_epoch_' + str(args.lr) + '_' + str(epoch))
 
-
 def eval_model(model, dataloader, baseline=False):
     results = {}
     for data in dataloader:
@@ -346,20 +357,6 @@ def val_step(model, gpu, dataloader, epoch):
     # print(type(apm_values_array)) # <class 'torch.Tensor'>
     apm.reset()
 
-    # Create results folder if it doesn't exist
-    if not os.path.exists("results"):
-
-        # if the results directory is not present
-        # then create it.
-        os.makedirs("results")
-
-    if not os.path.exists("results/" + 'inference'):
-
-        # if the results_folder_name directory is not present
-        # then create it.
-        os.makedirs("results/" + 'inference')
-
-    # TODO: Change to follow Eddie;s format in train.py
     # Creating 'Overall Accuracy (Inference)' CSV file
     # Column names: Test Epochs | Test m-AP | Test Loss
 
@@ -373,29 +370,27 @@ def val_step(model, gpu, dataloader, epoch):
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
     cwd = os.getcwd()
-    csv_file_name = f'{timestr}_Overall_Accuracy_Inference.csv'
+    csv_file_name = f'{timestr}_Overall_Inference_Accuracy.csv'
     file_path = os.path.join(cwd, 'results', 'inference', csv_file_name)
     df.to_csv(file_path, index=False)
-    print(f"Inference: Overall Accuracy results saved in {file_path}")
 
-    # filename = cwd + '\\results\\' + results_folder_name + '\\' + video_name + "_Overall_Accuracy_(Testing).csv"
+    # Add in title Overall Accuracy (Testing)
+    title = ['Overall Inference Accuracy']
 
-    # # Add in title Overall Accuracy (Testing)
-    # title = ['Overall Accuracy (Inference)']
+    with open(file_path, 'r') as readFile:
+        rd = csv.reader(readFile)
+        lines = list(rd)
+        lines.insert(0, title)
 
-    # with open(filename, 'r') as readFile:
-    #     rd = csv.reader(readFile)
-    #     lines = list(rd)
-    #     lines.insert(0, title)
+    with open(file_path, 'w', newline='') as writeFile:
+        wt = csv.writer(writeFile)
+        wt.writerows(lines)
 
-    # with open(filename, 'w', newline='') as writeFile:
-    #     wt = csv.writer(writeFile)
-    #     wt.writerows(lines)
+    readFile.close()
+    writeFile.close()
 
-    # readFile.close()
-    # writeFile.close()
+    print(f"\nInference: Overall Accuracy results saved in {file_path}")
 
-    # TODO: Change to follow Eddie;s format in train.py
     # Creating Activity Based Accuracy (Total) CSV file
     # Column names: Activity Name - Based on activity list | Average Class Prediction - Tensor
 
@@ -407,33 +402,32 @@ def val_step(model, gpu, dataloader, epoch):
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
     cwd = os.getcwd()
-    csv_file_name = f'{timestr}_Activity_Based_Accuracy_Total.csv'
+    csv_file_name = f'{timestr}_Inference_Activity_Based_Accuracy_Total.csv'
     file_path = os.path.join(cwd, 'results', 'inference', csv_file_name)
     df.to_csv(file_path, index=False)
-    print(f"Inference: Activity Based Accuracy (Total) results saved in {file_path}")
+    print(f"\nInference: Activity Based Accuracy (Total) results saved in {file_path}")
 
-    # filename = cwd + '\\results\\' + results_folder_name + '\\' + video_name + "_Activity_Based_Accuracy_(Total).csv"
-    # title = ['Activity Based Accuracy (Total)']
-    #
-    # # Add in title Activity Based Accuracy (Total)
-    # with open(filename, 'r') as readFile:
-    #     rd = csv.reader(readFile)
-    #     lines = list(rd)
-    #     lines.insert(0, title)
-    #
-    # with open(filename, 'w', newline='') as writeFile:
-    #     wt = csv.writer(writeFile)
-    #     wt.writerows(lines)
-    #
-    # readFile.close()
-    # writeFile.close()
+    title = ['Inference Activity Based Accuracy (Total)']
+
+    # Add in title Activity Based Accuracy (Total)
+    with open(file_path, 'r') as readFile:
+        rd = csv.reader(readFile)
+        lines = list(rd)
+        lines.insert(0, title)
+
+    with open(file_path, 'w', newline='') as writeFile:
+        wt = csv.writer(writeFile)
+        wt.writerows(lines)
+
+    readFile.close()
+    writeFile.close()
 
     return full_probs, epoch_loss, val_map
 
 
 def create_caption_video(arrayWithCaptions):
     video = filePath
-    print("video is: ", video)
+    print("\nvideo is: ", video)
     cap = cv2.VideoCapture(video)
     print("cap is: ", cap)
     print("Len", len(arrayWithCaptions))
@@ -643,8 +637,6 @@ def create_caption_video(arrayWithCaptions):
 
     # Prepare Pandas dataframe for CSV output
 
-
-    # TODO: Change to follow Eddie;s format in train.py
     # Creating Activity Based Accuracy (Frame by Frame) CSV file
     csv_data = {'Event': arr_events,
                 'Start_Frame': arr_start_frame,
@@ -655,26 +647,25 @@ def create_caption_video(arrayWithCaptions):
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
     cwd = os.getcwd()
-    csv_file_name = f'{timestr}_Activity_Based_Accuracy_FramebyFrame.csv'
+    csv_file_name = f'{timestr}_Inference_Activity_Based_Accuracy_FramebyFrame.csv'
     file_path = os.path.join(cwd, 'results', 'inference', csv_file_name)
     df.to_csv(file_path, index=False)
-    print(f"Inference: Activity Based Accuracy (FramebyFrame) results saved in {file_path}")
+    print(f"\nInference: Activity Based Accuracy (FramebyFrame) results saved in {file_path}")
 
-    # filename = cwd + '\\results\\' + results_folder_name + '\\' + video_name + "_Activity_Based_Accuracy_(FbyF).csv"
-    # title = ['Activity Based Accuracy (Frame by Frame)']
-    #
-    # # Add in title Activity Based Accuracy (Total)
-    # with open(filename, 'r') as readFile:
-    #     rd = csv.reader(readFile)
-    #     lines = list(rd)
-    #     lines.insert(0, title)
-    #
-    # with open(filename, 'w', newline='') as writeFile:
-    #     wt = csv.writer(writeFile)
-    #     wt.writerows(lines)
-    #
-    # readFile.close()
-    # writeFile.close()
+    title = ['Inference Activity Based Accuracy (Frame by Frame)']
+
+    # Add in title Activity Based Accuracy (Total)
+    with open(file_path, 'r') as readFile:
+        rd = csv.reader(readFile)
+        lines = list(rd)
+        lines.insert(0, title)
+
+    with open(file_path, 'w', newline='') as writeFile:
+        wt = csv.writer(writeFile)
+        wt.writerows(lines)
+
+    readFile.close()
+    writeFile.close()
 
     print('Video Inference Processing complete!')
 
