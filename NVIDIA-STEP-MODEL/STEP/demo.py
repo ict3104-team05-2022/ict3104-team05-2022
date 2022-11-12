@@ -33,7 +33,7 @@ def main():
 
     ################## Customize your configuratons here ###################
 
-    checkpoint_path = 'pretrained/ava_step.pth'
+    checkpoint_path = 'pretrained/trained.pth'
     os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
     if os.path.isfile(checkpoint_path):
         print ("Loading pretrain model from %s" % checkpoint_path)

@@ -98,7 +98,7 @@ def main():
     ################ DataLoader setup #################
 
     dataset = AVADataset(args.data_root, 'test', args.input_type, args.T, args.NUM_CHUNKS[args.max_iter], args.fps, BaseTransform(args.image_size, args.means, args.stds,args.scale_norm), proposal_path=args.proposal_path_val, stride=1, anchor_mode=args.anchor_mode, num_classes=args.num_classes, foreground_only=False)
-    dataloader = torch.utils.data.DataLoader(dataset, args.batch_size, num_workers=args.num_workers,
+    dataloader = torch.utils.data.DataLoader(dataset, 2, num_workers=4,
                                   shuffle=False, collate_fn=detection_collate, pin_memory=True)
 
     ################ Inference #################
