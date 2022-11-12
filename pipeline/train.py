@@ -13,8 +13,10 @@ import pandas as pd
 import re
 
 import warnings
+
 warnings.filterwarnings("ignore")
 os.environ["WANDB_SILENT"] = "True"
+
 
 # Convert input variable to true or false
 def str2bool(v):
@@ -117,6 +119,7 @@ rgb_root = args.rgb_root
 skeleton_root = './data/Skeleton'
 flow_root = './data/Flow'
 
+
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
@@ -168,56 +171,59 @@ def load_data(train_split, val_split, root):
 # train the model
 def run(models, criterion, num_epochs=50):
     wandb.init(project="training-visualisation",
-            config={
-                "batch_size": int(args.batch_size),
-                "learning_rate": float(args.lr),
-                "epochs": int(args.epoch),
-            })
+               config={
+                   "batch_size": int(args.batch_size),
+                   "learning_rate": float(args.lr),
+                   "epochs": int(args.epoch),
+               })
 
     since = time.time()
     best_model = None
     best_map = 0.0
     pbar = trange(num_epochs, desc='All epoch')
     for idx, epoch in enumerate(pbar):
-    #for epoch in range(num_epochs):
-        #print('Epoch {}/{}'.format(epoch, num_epochs - 1))
-        #print('-' * 10)
-            probs = []
-            for model, gpu, dataloader, optimizer, sched, model_file in models:
-                with tqdm(dataloader['train']) as tepoch:
-                    tepoch.set_description('Epoch {}/{} train'.format(epoch, num_epochs - 1))
-                    train_map, train_loss = train_step(model, gpu, optimizer, tepoch, epoch)
+        # for epoch in range(num_epochs):
+        # print('Epoch {}/{}'.format(epoch, num_epochs - 1))
+        # print('-' * 10)
+        probs = []
+        for model, gpu, dataloader, optimizer, sched, model_file in models:
+            with tqdm(dataloader['train']) as tepoch:
+                tepoch.set_description('Epoch {}/{} train'.format(epoch, num_epochs - 1))
+                train_map, train_loss = train_step(model, gpu, optimizer, tepoch, epoch)
 
-                with tqdm(dataloader['val']) as tepoch:
-                    tepoch.set_description('Epoch {}/{} val'.format(epoch, num_epochs - 1))
-                    prob_val, val_loss, val_map = val_step(model, gpu, tepoch, epoch)
-                    probs.append(prob_val)
-                    sched.step(val_loss)
+            with tqdm(dataloader['val']) as tepoch:
+                tepoch.set_description('Epoch {}/{} val'.format(epoch, num_epochs - 1))
+                prob_val, val_loss, val_map = val_step(model, gpu, tepoch, epoch)
+                probs.append(prob_val)
+                sched.step(val_loss)
 
-                    wandb.log({"loss": val_loss.item(), "accuracy": val_map.item()})
+                wandb.log({"loss": val_loss.item(), "accuracy": val_map.item()})
 
-                    if best_map < val_map:
-                        best_map = val_map
-                        pbar.set_postfix({'loss':val_loss.item(),'best accuracy':best_map.item()})
-                        wandb.log({"best accuracy": best_map.item()})
-                        best_model = model
-                        pickle.dump(prob_val, open('./models/' + str(epoch) + '.pkl', 'wb'), pickle.HIGHEST_PROTOCOL)
-                        # torch.save(model.state_dict(),
-                        #            './results/' + str(args.model) + '/weight_epoch_' + str(args.lr) + '_' + str(epoch))
-                        # torch.save(model, './results/' + str(args.model) + '/model_epoch_' + str(args.lr) + '_' + str(epoch))
-                        #print('save here for model: ',
-                        #      './results/' + str(args.model) + '/model_epoch_' + str(args.lr) + '_' + str(epoch))
-                        #print('save here for weight:',
-                        #      './results/' + str(args.model) + '/weight_epoch_' + str(args.lr) + '_' + str(epoch))
+                if best_map < val_map:
+                    best_map = val_map
+                    pbar.set_postfix({'loss': val_loss.item(), 'best accuracy': best_map.item()})
+                    wandb.log({"best accuracy": best_map.item()})
+                    best_model = model
+                    pickle.dump(prob_val, open('./models/' + str(epoch) + '.pkl', 'wb'), pickle.HIGHEST_PROTOCOL)
+                    # torch.save(model.state_dict(),
+                    #            './results/' + str(args.model) + '/weight_epoch_' + str(args.lr) + '_' + str(epoch))
+                    # torch.save(model, './results/' + str(args.model) + '/model_epoch_' + str(args.lr) + '_' + str(epoch))
+                    # print('save here for model: ',
+                    #      './results/' + str(args.model) + '/model_epoch_' + str(args.lr) + '_' + str(epoch))
+                    # print('save here for weight:',
+                    #      './results/' + str(args.model) + '/weight_epoch_' + str(args.lr) + '_' + str(epoch))
 
     # Save the best model
     timestr = time.strftime("%Y%m%d-%H%M%S")
     torch.save(best_model, f'./models/PDAN_TSU_RGB_Train_{timestr}')
     print(f"Trained model saved in ./models/PDAN_TSU_RGB_Train_{timestr}")
+
     # Creating 'Overall Accuracy (Training)' CSV file
-    # Column names: Trained On | Train Epochs | Train m-AP | Train Loss
-    cleaned_train_map = (str(train_map))[7:-1] # Remove tensor() and trailing comma
+    # Column names: Trained On | Train m-AP | Train Loss | Train Epochs
+    cleaned_train_map = (str(train_map))[7:-1]  # Remove tensor() and trailing comma
     cleaned_val_map = (str(best_map))[7:-1]  # Remove tensor() and trailing comma
+    cleaned_train_loss = (str(train_loss))[7:-18]  # Remove tensor() and trailing comma
+    cleaned_val_loss = (str(val_loss ))[7:-18]  # Remove tensor() and trailing comma
     # Load the JSON file to dict
     json_file = open(args.json_file, 'r')
     video_dict = json.load(json_file)
@@ -230,19 +236,22 @@ def run(models, criterion, num_epochs=50):
         # Get testing videos
         elif values['subset'] == 'testing':
             noOfTestingVideo += 1
+
     df = pd.DataFrame({
-                       'Train On' : f'{noOfTrainingVideo} Training Videos',
-                       'Train Epochs': str(int(args.epoch)),
-                       'Train m-AP': cleaned_train_map,
-                        'Tested On': f'{noOfTestingVideo} Testing Videos',
-                       'Val Map': cleaned_val_map
-                       }, index=[0])
+        'Train On': f'{noOfTrainingVideo} Training Videos',
+        'Train m-AP': cleaned_train_map,
+        'Train Loss': cleaned_train_loss,
+        'Tested On': f'{noOfTestingVideo} Testing Videos',
+        'Prediction m-AP': cleaned_val_map,
+        'Validation loss': cleaned_val_loss,
+        'Epochs': str(int(args.epoch)),
+    }, index=[0])
 
     cwd = os.getcwd()
     csv_file_name = f'{timestr}_Overall_Accuracy_Training.csv'
     file_path = os.path.join(cwd, 'results', 'train', csv_file_name)
     df.to_csv(file_path, index=False)
-    print(f"Train Result saved in {file_path}")
+    print(f"Training results saved in {file_path}")
 
 
 # Eval the model
@@ -279,7 +288,7 @@ def run_network(model, data, gpu, epoch=0, baseline=False):
 
     if args.model == "PDAN_TSU_RGB":
         # print('outputs_final1', outputs_final.size())
-        outputs_final = outputs_final[:, 0, :, :] # Original
+        outputs_final = outputs_final[:, 0, :, :]  # Original
         # outputs_final = outputs_final[0, :, :, :] # Modified
     # print('outputs_final',outputs_final.size())
     outputs_final = outputs_final.permute(0, 2, 1)
@@ -313,18 +322,18 @@ def train_step(model, gpu, optimizer, dataloader, epoch):
         loss.backward()
         optimizer.step()
 
-        dataloader.set_postfix({'loss':(tot_loss / num_iter).item(), 'accuracy':(100 * apm.value().mean()).item()})
+        dataloader.set_postfix({'loss': (tot_loss / num_iter).item(), 'accuracy': (100 * apm.value().mean()).item()})
         sleep(0.1)
 
     if args.APtype == 'wap':
         train_map = 100 * apm.value()
     else:
         train_map = 100 * apm.value().mean()
-    #print('train-map:', train_map)
+    # print('train-map:', train_map)
     apm.reset()
 
     epoch_loss = tot_loss / num_iter
-    #print('epoch-loss:', epoch_loss)
+    # print('epoch-loss:', epoch_loss)
     return train_map, epoch_loss
 
 
@@ -355,16 +364,18 @@ def val_step(model, gpu, dataloader, epoch):
 
         full_probs[other[0][0]] = probs.data.cpu().numpy().T
 
-        dataloader.set_postfix({'loss':(tot_loss / num_iter).item(), 'accuracy':(torch.sum(100 * apm.value()) / torch.nonzero(100 * apm.value()).size()[0]).item()})
+        dataloader.set_postfix({'loss': (tot_loss / num_iter).item(), 'accuracy': (
+                    torch.sum(100 * apm.value()) / torch.nonzero(100 * apm.value()).size()[0]).item()})
         sleep(0.1)
 
     epoch_loss = tot_loss / num_iter
 
     val_map = torch.sum(100 * apm.value()) / torch.nonzero(100 * apm.value()).size()[0]
     # print('Training accuracy:', val_map)
-    #print(100 * apm.value())
+    # print(100 * apm.value())
     apm.reset()
     return full_probs, epoch_loss, val_map
+
 
 if __name__ == '__main__':
     print(str(args.model))
