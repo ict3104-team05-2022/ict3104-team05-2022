@@ -17,6 +17,7 @@ import time
 from datetime import datetime
 #from tensorboardX import SummaryWriter
 import glob
+import argparse
 
 from config import parse_config
 from models import BaseNet, ROINet, TwoBranchNet, ContextNet
@@ -28,12 +29,15 @@ from data.augmentations import BaseTransform
 from utils.eval_utils import ava_evaluation
 from external.ActivityNet.Evaluation.get_ava_performance import read_labelmap
 
+parser = argparse.ArgumentParser()
+parser.add_argument('-model', type=str, default='ava_step.pth')
+args_input = parser.parse_args()
 
 def main():
 
     ################## Load pretrained model and configurations ###################
 
-    checkpoint_path = 'pretrained/ava_step.pth'
+    checkpoint_path = 'pretrained/' + args_input.model
     if os.path.isfile(checkpoint_path):
         print ("Loading pretrain model from %s" % checkpoint_path)
         map_location = 'cuda:0'
