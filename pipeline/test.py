@@ -3,10 +3,13 @@ import json
 import numpy as np
 import pickle
 import torch
+import warnings
 import torch._utils
+import wandb
+
 from apmeter import APMeter
 
-
+warnings.filterwarnings("ignore")
 def make_gt(gt_file, logits, num_classes=51):
     gt_new = {}
     with open(gt_file, 'r') as f:
@@ -35,6 +38,8 @@ if __name__ == '__main__':
     parser.add_argument('-split', type=str)
     parser.add_argument('-pkl_path', type=str)  # './test.pkl'
     args = parser.parse_args()
+    
+    wandb.init(project="testing-visualisation")
 
     split = args.split
     pkl_path = args.pkl_path
@@ -53,6 +58,10 @@ if __name__ == '__main__':
         logit = np.transpose(logits[vid], (1, 0))
         apm.add(logit, gt_new[vid])
 
+        val_map = torch.sum(100 * apm.value()) / torch.nonzero(100 * apm.value()).size()[0]
+        
+        wandb.log({"val_map": val_map})
+        wandb.log({"avg_class_accuracy": sum(apm.value()) / len(apm.value())})
+        
     val_map = torch.sum(100 * apm.value()) / torch.nonzero(100 * apm.value()).size()[0]
-
     print ("Test Frame-based map", val_map.mean())
