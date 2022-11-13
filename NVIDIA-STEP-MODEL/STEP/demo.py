@@ -12,6 +12,7 @@ import torch.optim as optim
 import torch.utils.data
 import torchvision
 import numpy as np
+import argparse
 from collections import OrderedDict
 import time
 from datetime import datetime
@@ -27,13 +28,17 @@ from utils.vis_utils import overlay_image
 from data.customize import CustomizedDataset, detection_collate, WIDTH, HEIGHT
 from data.augmentations import BaseTransform
 
+parser = argparse.ArgumentParser()
+parser.add_argument('-model', type=str, default='ava_step.pth')
+parser.add_argument('-root_folder', type=str, default='demo')
+args_input = parser.parse_args()
 
 
 def main():
 
     ################## Customize your configuratons here ###################
 
-    checkpoint_path = 'pretrained/ava_step.pth'
+    checkpoint_path = 'pretrained/' + args_input.model
     os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
     if os.path.isfile(checkpoint_path):
         print ("Loading pretrain model from %s" % checkpoint_path)
@@ -45,8 +50,8 @@ def main():
 
     # TODO: Set data_root to the customized input dataset
     args.num_workers = 1
-    args.data_root = 'datasets/demo/frames/'
-    args.save_root = os.path.join(os.path.dirname('datasets/demo/'), 'results/')
+    args.data_root = os.path.join(os.path.dirname(args_input.root_folder), 'frames/')
+    args.save_root = os.path.join(os.path.dirname('Output/'), 'results/')
     if not os.path.isdir(args.save_root):
         os.makedirs(args.save_root)
 
