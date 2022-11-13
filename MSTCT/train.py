@@ -13,10 +13,14 @@ from utils import *
 from apmeter import APMeter
 import os
 import warnings
+from tqdm.notebook import trange
+from tqdm.notebook import tqdm
+from time import sleep
+
 warnings.filterwarnings("ignore")
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-mode',type=str,  default='rgb',   help='rgb or flow (or joint for eval)')
+parser.add_argument('-mode', type=str, default='rgb', help='rgb or flow (or joint for eval)')
 parser.add_argument('-train', type=str2bool, default='True', help='train or eval')
 parser.add_argument('-comp_info', type=str, default='False', help='comp_info')
 parser.add_argument('-gpu', type=str, default='1')
@@ -52,13 +56,13 @@ torch.backends.cudnn.benchmark = False
 
 batch_size = int(args.batch_size)
 
-
 if args.dataset == 'charades':
     from charades_dataloader import Charades as Dataset
 
     if str(args.unisize) == "True":
         # print("uni-size padd all T to",args.num_clips)
         from charades_dataloader import collate_fn_unisize
+
         collate_fn_f = collate_fn_unisize(args.num_clips)
         collate_fn = collate_fn_f.charades_collate_fn_unisize
     else:
@@ -66,8 +70,8 @@ if args.dataset == 'charades':
 
     train_split = './data/charadesV2.json'
     test_split = train_split
-    rgb_root =  args.rgb_root
-    flow_root = '/flow_feat_path/' # optional
+    rgb_root = args.rgb_root
+    flow_root = '/flow_feat_path/'  # optional
     # rgb_of=[rgb_root,flow_root]
     classes = 157
 
@@ -92,29 +96,37 @@ def load_data(train_split, val_split, root):
     val_dataloader.root = root
     dataloaders = {'train': dataloader, 'val': val_dataloader}
     datasets = {'train': dataset, 'val': val_dataset}
-    
+
     return dataloaders, datasets
 
 
 def run(models, criterion, num_epochs=50):
     since = time.time()
     Best_val_map = 0.
-    for epoch in range(num_epochs):
+    pbar = trange(num_epochs, desc='All epoch')
+    for idx, epoch in enumerate(pbar):
+        # for epoch in range(num_epochs):
         since1 = time.time()
-        print('Epoch {}/{}'.format(epoch, num_epochs - 1))
-        print('-' * 10)
+        # print('Epoch {}/{}'.format(epoch, num_epochs - 1))
+        # print('-' * 10)
         for model, gpu, dataloader, optimizer, sched, model_file in models:
-            _, _ = train_step(model, gpu, optimizer, dataloader['train'], epoch)
-            prob_val, val_loss, val_map = val_step(model, gpu, dataloader['val'], epoch)
-            sched.step(val_loss)
-            # Time
-            print("epoch", epoch, "Total_Time",time.time()-since, "Epoch_time",time.time()-since1)
-            
-            if Best_val_map < val_map:
-                Best_val_map = val_map
-                print("epoch",epoch,"Best Val Map Update",Best_val_map)
-                pickle.dump(prob_val, open('./save_logit/' + str(epoch) + '.pkl', 'wb'), pickle.HIGHEST_PROTOCOL)
-                print("logit_saved at:","./save_logit/" + str(epoch) + ".pkl")
+            with tqdm(dataloader['train']) as tepoch:
+                tepoch.set_description('Epoch {}/{} train'.format(epoch, num_epochs - 1))
+                _, _ = train_step(model, gpu, optimizer, tepoch, epoch)
+            with tqdm(dataloader['val']) as tepoch:
+                tepoch.set_description('Epoch {}/{} val'.format(epoch, num_epochs - 1))
+                prob_val, val_loss, val_map = val_step(model, gpu, tepoch, epoch)
+                sched.step(val_loss)
+                # Time
+                # print("epoch", epoch, "Total_Time",time.time()-since, "Epoch_time",time.time()-since1)
+
+                if Best_val_map < val_map:
+                    Best_val_map = val_map
+                    pbar.set_postfix({'loss': val_loss.item(), 'best accuracy': Best_val_map})
+
+                    print("epoch", epoch, "Best Val Map Update", Best_val_map)
+                    pickle.dump(prob_val, open('./save_logit/' + str(epoch) + '.pkl', 'wb'), pickle.HIGHEST_PROTOCOL)
+                    print("logit_saved at:", "./save_logit/" + str(epoch) + ".pkl")
 
 
 def eval_model(model, dataloader, baseline=False):
@@ -129,9 +141,9 @@ def eval_model(model, dataloader, baseline=False):
 
 
 def run_network(model, data, gpu, epoch=0, baseline=False):
-    # 
+    #
     inputs, mask, labels, other, hm = data
-    # wrap them in Variable 
+    # wrap them in Variable
     inputs = Variable(inputs.cuda(gpu))
     mask = Variable(mask.cuda(gpu))
     labels = Variable(labels.cuda(gpu))
@@ -139,7 +151,7 @@ def run_network(model, data, gpu, epoch=0, baseline=False):
 
     inputs = inputs.squeeze(3).squeeze(3)
 
-    outputs_final,out_hm = model(inputs)
+    outputs_final, out_hm = model(inputs)
 
     # Logit
     probs_f = F.sigmoid(outputs_final) * mask.unsqueeze(2)
@@ -174,8 +186,11 @@ def train_step(model, gpu, optimizer, dataloader, epoch):
         loss.backward()
         optimizer.step()
 
+        dataloader.set_postfix({'loss': (tot_loss / num_iter).item(), 'accuracy': (100 * apm.value().mean()).item()})
+        sleep(0.1)
+
     train_map = 100 * apm.value().mean()
-    print('epoch',epoch,'train-map:', train_map)
+    # print('epoch',epoch,'train-map:', train_map)
     apm.reset()
 
     epoch_loss = tot_loss / num_iter
@@ -186,7 +201,7 @@ def train_step(model, gpu, optimizer, dataloader, epoch):
 def val_step(model, gpu, dataloader, epoch):
     model.train(False)
     apm = APMeter()
-    sampled_apm= APMeter()
+    sampled_apm = APMeter()
     tot_loss = 0.0
     error = 0.0
     num_iter = 0.
@@ -198,26 +213,30 @@ def val_step(model, gpu, dataloader, epoch):
         other = data[3]
 
         outputs, loss, probs, err = run_network(model, data, gpu, epoch)
-        if sum(data[1].numpy()[0])>25:
-            p1,l1=sampled_25(probs.data.cpu().numpy()[0],data[2].numpy()[0],data[1].numpy()[0])
-            sampled_apm.add(p1,l1)
+        if sum(data[1].numpy()[0]) > 25:
+            p1, l1 = sampled_25(probs.data.cpu().numpy()[0], data[2].numpy()[0], data[1].numpy()[0])
+            sampled_apm.add(p1, l1)
 
         apm.add(probs.data.cpu().numpy()[0], data[2].numpy()[0])
 
         error += err.data
         tot_loss += loss.data
-        
-        probs_1 = mask_probs(probs.data.cpu().numpy()[0],data[1].numpy()[0]).squeeze()
+
+        probs_1 = mask_probs(probs.data.cpu().numpy()[0], data[1].numpy()[0]).squeeze()
 
         full_probs[other[0][0]] = probs_1.T
+
+        dataloader.set_postfix({'loss': (tot_loss / num_iter).item(), 'accuracy': (
+                    torch.sum(100 * apm.value()) / torch.nonzero(100 * apm.value()).size()[0]).item()})
+        sleep(0.1)
 
     epoch_loss = tot_loss / num_iter
     val_map = torch.sum(100 * apm.value()) / torch.nonzero(100 * apm.value()).size()[0]
     sample_val_map = torch.sum(100 * sampled_apm.value()) / torch.nonzero(100 * sampled_apm.value()).size()[0]
 
-    print('epoch',epoch,'Full-val-map:', val_map)
-    print('epoch',epoch,'sampled-val-map:', sample_val_map)
-    print(100 * sampled_apm.value())
+    print('epoch', epoch, 'Full-val-map:', val_map)
+    print('epoch', epoch, 'sampled-val-map:', sample_val_map)
+    # print(100 * sampled_apm.value())
     apm.reset()
     sampled_apm.reset()
     return full_probs, epoch_loss, val_map
@@ -237,13 +256,12 @@ if __name__ == '__main__':
     if args.train:
 
         if args.model == "MS_TCT":
-            print("MS_TCT")
             from MSTCT.MSTCT_Model import MSTCT
             num_clips = int(args.num_clips)
             # C
             num_classes = classes
-            # D = 256, gamma = 1.5 
-            inter_channels=[256,384,576,864]
+            # D = 256, gamma = 1.5
+            inter_channels = [256, 384, 576, 864]
             # B
             num_block = 3
             # H
@@ -254,9 +272,9 @@ if __name__ == '__main__':
             in_feat_dim = 1024
             # D_v
             final_embedding_dim = 512
-            
+
             rgb_model = MSTCT(inter_channels, num_block, head, mlp_ratio, in_feat_dim, final_embedding_dim, num_classes)
-            print("loaded",args.load_model)
+            print("loaded", args.load_model)
 
         rgb_model.cuda()
 
