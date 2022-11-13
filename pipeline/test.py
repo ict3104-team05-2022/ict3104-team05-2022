@@ -37,15 +37,16 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-split', type=str)
     parser.add_argument('-pkl_path', type=str)  # './test.pkl'
+    parser.add_argument('-json_file', type=str, help='path to json file')
     args = parser.parse_args()
-    
+    file = args.json_file
     wandb.init(project="testing-visualisation")
 
     split = args.split
     pkl_path = args.pkl_path
 
     if split == 'CS':
-        gt_file = './data/smarthome_CS_51_v2.json'
+        gt_file = file
         classes = 51
 
     pkl = open(pkl_path, 'rb')

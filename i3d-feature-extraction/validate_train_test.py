@@ -86,7 +86,7 @@ for video_id, video_data in data.items():
     video_data["subset"] = type
 
 # creates new updated version of smarthome.json with removed video IDs
-with open('../pipeline/data/smarthome_CS_51_v2.json', "w") as outfile:
+with open('../data/dataset/JSON/smarthome_CS_51_v2.json', "w") as outfile:
     json.dump(data, outfile)
 
 print(f"{len(valid_videos) - len(missing_vids)}/536 extracted original videos found")
