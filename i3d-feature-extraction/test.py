@@ -1,5 +1,5 @@
-from models.i3d.extract_i3d import ExtractI3D
-from utils.utils import build_cfg_path
+from models2.i3d.extract_i3d import ExtractI3D
+from utils2.utils import build_cfg_path
 from omegaconf import OmegaConf
 import torch
 

@@ -1,13 +1,20 @@
+import numpy as np
+import os
+
 from omegaconf import OmegaConf
 from tqdm import tqdm
 
-from utils.utils import build_cfg_path, form_list_from_user_input, sanity_check
+from utils2.utils import build_cfg_path, form_list_from_user_input, sanity_check
+
+import os
+import os.path
 
 
 def main(args_cli):
     # config
     args_yml = OmegaConf.load(build_cfg_path(args_cli.feature_type))
-    args = OmegaConf.merge(args_yml, args_cli)  # the latter arguments are prioritized
+    # the latter arguments are prioritized
+    args = OmegaConf.merge(args_yml, args_cli)
     # OmegaConf.set_readonly(args, True)
     sanity_check(args)
 
@@ -19,35 +26,53 @@ def main(args_cli):
 
     # import are done here to avoid import errors (we have two conda environements)
     if args.feature_type == 'i3d':
-        from models.i3d.extract_i3d import ExtractI3D as Extractor
+        from models2.i3d.extract_i3d import ExtractI3D as Extractor
     elif args.feature_type == 'r21d':
-        from models.r21d.extract_r21d import ExtractR21D as Extractor
+        from models2.r21d.extract_r21d import ExtractR21D as Extractor
     elif args.feature_type == 's3d':
-        from models.s3d.extract_s3d import ExtractS3D as Extractor
+        from models2.s3d.extract_s3d import ExtractS3D as Extractor
     elif args.feature_type == 'vggish':
-        from models.vggish.extract_vggish import ExtractVGGish as Extractor
+        from models2.vggish.extract_vggish import ExtractVGGish as Extractor
     elif args.feature_type == 'resnet':
-        from models.resnet.extract_resnet import ExtractResNet as Extractor
+        from models2.resnet.extract_resnet import ExtractResNet as Extractor
     elif args.feature_type == 'raft':
-        from models.raft.extract_raft import ExtractRAFT as Extractor
+        from models2.raft.extract_raft import ExtractRAFT as Extractor
     elif args.feature_type == 'pwc':
-        from models.pwc.extract_pwc import ExtractPWC as Extractor
+        from models2.pwc.extract_pwc import ExtractPWC as Extractor
     elif args.feature_type == 'clip':
-        from models.clip.extract_clip import ExtractCLIP as Extractor
+        from models2.clip.extract_clip import ExtractCLIP as Extractor
     else:
-        raise NotImplementedError(f'Extractor {args.feature_type} is not implemented.')
+        raise NotImplementedError(
+            f'Extractor {args.feature_type} is not implemented.')
 
     extractor = Extractor(args)
 
     # unifies whatever a user specified as paths into a list of paths
-    video_paths = form_list_from_user_input(args.video_paths, args.file_with_video_paths, to_shuffle=True)
+    video_paths = form_list_from_user_input(
+        args.video_paths, args.file_with_video_paths, to_shuffle=True)
 
     print(f'The number of specified videos: {len(video_paths)}')
+    print(f'Output path: {args.output_path}')
 
     for video_path in tqdm(video_paths):
-        extractor._extract(video_path)  # note the `_` in the method name
+        # Get the video file name from the video path
+        video_file_name = video_path.split('/')[-1]
+        video_file_name = video_file_name.split('.')[0]
 
-    # yep, it is this simple!
+        feature_dict = extractor.extract(video_path)
+        rgb = list(feature_dict.items())[0]
+
+        # Reshape the data to fit into the TSU model
+        rgb_data = np.expand_dims(rgb[1], axis=(2, 1))
+        rgb_dir = args.output_path
+        rgb_dir_exists = os.path.isdir(rgb_dir)
+
+        if not rgb_dir_exists:
+            os.mkdir(rgb_dir)
+
+        np.save(rgb_dir + video_file_name + ".npy", rgb_data)
+
+    print('Feature extraction complete!')
 
 
 if __name__ == '__main__':

@@ -132,4 +132,18 @@ pipeline/data/RGB/
 
 .idea/
 
-pipeline/video/
+NVIDIA-STEP-MODEL/STEP/pretrained/ava_step.pth
+*.mp4
+*.npy
+pipeline/results/PDAN_TSU_RGB/
+
+*.csv
+*.jpg
+
+*.pkl
+pipeline/models/PDAN_TSU_RGB_Train_*
+pipeline/wandb/
+*.mkv
+*.pth
+*.pbtxt
+NVIDIA-STEP-MODEL/STEP/datasets/
